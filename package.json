@@ -11,6 +11,13 @@
     "db:generate": "pnpm --filter @guri/api db:generate"
   },
   "pnpm": {
+    "packageExtensions": {
+      "@hookform/resolvers": {
+        "peerDependencies": {
+          "zod": "*"
+        }
+      }
+    },
     "onlyBuiltDependencies": [
       "@nestjs/core",
       "argon2",

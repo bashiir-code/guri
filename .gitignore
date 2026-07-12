@@ -12,6 +12,11 @@ out/
 .env.*
 !.env.example
 
+# serwist — generated service worker (built by `next build`)
+apps/web/public/sw.js
+apps/web/public/sw.js.map
+apps/web/public/swe-worker*.js
+
 # logs & misc
 *.log
 coverage/

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
@@ -19,6 +19,11 @@ const bricolage = Bricolage_Grotesque({
 export const metadata: Metadata = {
   title: 'Guri',
   description: 'Find a home in Mogadishu through verified agencies',
+};
+
+// Browser chrome matches the Forest header when installed as a PWA.
+export const viewport: Viewport = {
+  themeColor: '#173A31',
 };
 
 export function generateStaticParams() {
