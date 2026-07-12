@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Guri palette mapped onto shadcn/ui tokens.
+   background = Mist, foreground = Forest, primary = Lime (Forest text on Lime,
+   never white), secondary/muted = Slate. */
+@layer base {
+  :root {
+    --background: 96 24% 96%; /* Mist #F4F7F2 */
+    --foreground: 165 43% 16%; /* Forest #173A31 */
+    --card: 0 0% 100%;
+    --card-foreground: 165 43% 16%;
+    --primary: 84 86% 66%; /* Lime #B7F35D */
+    --primary-foreground: 165 43% 16%; /* Forest on Lime */
+    --secondary: 152 8% 95%;
+    --secondary-foreground: 152 8% 39%; /* Slate #5C6B64 */
+    --muted: 152 8% 92%;
+    --muted-foreground: 152 8% 39%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 165 15% 88%; /* hairline borders */
+    --input: 165 15% 82%;
+    --ring: 165 43% 16%;
+    --radius: 1.25rem; /* 20px card radius */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  /* horizontal scroller with hidden scrollbar (from the Guri design file) */
+  .hs {
+    scrollbar-width: none;
+  }
+  .hs::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Any page carrying the phone bottom nav gets room for it, so content never
+   hides behind the fixed bar (the nav is md:hidden, so only pad below md). */
+@media (max-width: 767px) {
+  body:has(nav[data-bottom-nav]) {
+    padding-bottom: 5.5rem;
+  }
+}
+
+/* Motion vocabulary from Guri design: springy pop + sheet slide + soft fades.
+   All of it disabled for users who prefer reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes sheetUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  @keyframes pop {
+    0% {
+      transform: scale(0.4);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.08);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  @keyframes riseIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease both;
+  }
+  .animate-sheet-up {
+    animation: sheetUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-pop {
+    animation: pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-rise-in {
+    animation: riseIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}

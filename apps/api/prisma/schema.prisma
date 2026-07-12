@@ -1,0 +1,477 @@
+// Guri — Prisma schema for every table in SPEC §3.
+// All tables have id (uuid), created_at, updated_at.
+// Enums mirror packages/shared/src/enums.ts and the §4/§16 state tables exactly.
+//
+// Deviations from the strict §3 list, both required by other SPEC sections:
+//   - users.is_platform_admin  — §2 requires the platform-admin role to be modeled.
+//   - otp_codes                — §11 pins auth to "hashed codes in Postgres".
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- enums ----------
+
+enum Locale {
+  so
+  en
+}
+
+enum AgencyStatus {
+  pending
+  active
+  suspended
+}
+
+// v1.10: verification is the can_verify permission on agency_members, not a
+// standalone role (CLAUDE.md rule 9).
+enum AgencyRole {
+  admin
+  agent
+}
+
+enum OwnerInviteStatus {
+  invited
+  claimed
+}
+
+enum ListingType {
+  apartment
+  house
+  room
+  villa
+}
+
+// Derived, never written directly (§3): recomputed by the state-machine
+// service on every deal/lease transition, persisted for cheap filtering.
+enum ListingStatus {
+  available
+  reserved
+  rented
+}
+
+enum OwnerDocumentType {
+  title_deed
+  municipal_doc
+  agency_attestation
+  other
+}
+
+enum DealState {
+  requested
+  viewing_scheduled
+  awaiting_docs
+  docs_in_review
+  approved
+  closed
+  expired
+  withdrawn
+  declined_by_agency
+  no_show
+  declined
+  docs_rejected
+}
+
+// Strict on WHAT (rule 11): national ID or passport only.
+enum CustomerDocumentType {
+  national_id
+  passport
+}
+
+enum CapturedVia {
+  camera
+  gallery
+}
+
+enum DocumentReviewStatus {
+  pending
+  approved
+  rejected
+}
+
+enum LeaseStatus {
+  active
+  ending_soon
+  renewed
+  ended
+  vacated
+}
+
+enum PaymentType {
+  deposit
+  advance_rent
+  monthly_rent
+  commission
+}
+
+enum NotificationChannel {
+  sms
+  wa_link
+  inapp
+}
+
+enum IntakeStatus {
+  submitted
+  accepted
+  converted
+  declined
+  expired
+}
+
+// ---------- models ----------
+
+// Mirrors Clerk via the /webhooks/clerk endpoint (SPEC §3 v1.9) — identity
+// must exist locally because deals/leases/agency_members/audit_log hold real
+// foreign keys. Null clerk_user_id = a row pre-provisioned by an agency
+// (owner invite, staff add) that links up when that person first signs in.
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  clerkUserId     String?   @unique @map("clerk_user_id")
+  email           String?   @unique
+  // Contact data only — NOT unique, NOT verified, NOT a credential (rule 14).
+  phone           String?
+  active          Boolean   @default(true)
+  // Set when a user leaves the platform (§16): profile hidden, personal data
+  // scheduled for deletion per §9. Signing in again reactivates.
+  deactivatedAt   DateTime? @map("deactivated_at")
+  name            String?
+  photoKey        String?   @map("photo_key")
+  locale          Locale    @default(so)
+  isPlatformAdmin Boolean   @default(false) @map("is_platform_admin")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  agencyMemberships  AgencyMember[]
+  ownerProfiles      Owner[]            @relation("OwnerUser")
+  ownersCreated      Owner[]            @relation("OwnerCreatedBy")
+  dealsAsCustomer    Deal[]             @relation("DealCustomer")
+  dealsAsAgent       Deal[]             @relation("DealAgent")
+  dealEvents         DealEvent[]        @relation("DealEventActor")
+  customerDocuments  CustomerDocument[] @relation("CustomerDocumentCustomer")
+  documentsReviewed  CustomerDocument[] @relation("CustomerDocumentReviewer")
+  ownerDocsUploaded  OwnerDocument[]    @relation("OwnerDocumentUploader")
+  leases             Lease[]            @relation("LeaseCustomer")
+  paymentsRecorded   Payment[]          @relation("PaymentRecorder")
+  auditLogs          AuditLog[]         @relation("AuditActor")
+  notifications      Notification[]
+  intakes            Intake[]           @relation("IntakeOwnerUser")
+
+  @@map("users")
+}
+
+model Agency {
+  id        String       @id @default(uuid()) @db.Uuid
+  name      String
+  phone     String
+  districts String[]
+  status    AgencyStatus @default(pending)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  members  AgencyMember[]
+  owners   Owner[]
+  listings Listing[]
+  intakes  Intake[]
+
+  @@map("agencies")
+}
+
+model AgencyMember {
+  id        String     @id @default(uuid()) @db.Uuid
+  userId    String     @map("user_id") @db.Uuid
+  agencyId  String     @map("agency_id") @db.Uuid
+  role      AgencyRole
+  // May approve/reject document sets on this agency's deals — including deals
+  // they run themselves; the audit trail is the safeguard (§4).
+  canVerify Boolean    @default(false) @map("can_verify")
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id])
+  agency Agency @relation(fields: [agencyId], references: [id])
+
+  // One user can hold several roles in one agency (§2) — one row per role.
+  @@unique([userId, agencyId, role])
+  @@index([agencyId])
+  @@map("agency_members")
+}
+
+model Owner {
+  id           String            @id @default(uuid()) @db.Uuid
+  userId       String            @map("user_id") @db.Uuid
+  agencyId     String            @map("agency_id") @db.Uuid
+  createdById  String            @map("created_by") @db.Uuid
+  inviteStatus OwnerInviteStatus @default(invited) @map("invite_status")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  user      User            @relation("OwnerUser", fields: [userId], references: [id])
+  agency    Agency          @relation(fields: [agencyId], references: [id])
+  createdBy User            @relation("OwnerCreatedBy", fields: [createdById], references: [id])
+  listings  Listing[]
+  documents OwnerDocument[]
+
+  @@unique([userId, agencyId])
+  @@index([agencyId])
+  @@map("owners")
+}
+
+model Listing {
+  id            String        @id @default(uuid()) @db.Uuid
+  agencyId      String        @map("agency_id") @db.Uuid
+  ownerId       String        @map("owner_id") @db.Uuid
+  district      String
+  neighborhood  String?
+  type          ListingType
+  bedrooms      Int
+  bathrooms     Int
+  rentUsd       Decimal       @map("rent_usd") @db.Decimal(10, 2)
+  depositUsd    Decimal       @map("deposit_usd") @db.Decimal(10, 2)
+  descriptionSo String        @map("description_so")
+  descriptionEn String        @map("description_en")
+  photos        String[] // storage keys
+  status        ListingStatus @default(available)
+  // Publish gate (phase 1): agency ticks that it inspected the original
+  // ownership papers at the owner meetup; publishing requires it.
+  originalsVerified Boolean   @default(false) @map("originals_verified")
+  // null = draft, invisible outside the owning agency. Status stays derived;
+  // "published" is a fact, not a status.
+  publishedAt   DateTime?     @map("published_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  agency    Agency          @relation(fields: [agencyId], references: [id])
+  owner     Owner           @relation(fields: [ownerId], references: [id])
+  ownerDocs OwnerDocument[]
+  deals     Deal[]
+  leases    Lease[]
+  intakes   Intake[]
+
+  @@index([agencyId])
+  @@index([district, status])
+  @@map("listings")
+}
+
+model OwnerDocument {
+  id           String            @id @default(uuid()) @db.Uuid
+  ownerId      String            @map("owner_id") @db.Uuid
+  listingId    String?           @map("listing_id") @db.Uuid
+  // Flexible document capture: free-text label + optional note; the §3 type
+  // enum stays for classification, defaulting to `other`.
+  label        String
+  note         String?
+  type         OwnerDocumentType @default(other)
+  fileKey      String            @map("file_key")
+  uploadedById String            @map("uploaded_by") @db.Uuid
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  owner      Owner    @relation(fields: [ownerId], references: [id])
+  listing    Listing? @relation(fields: [listingId], references: [id])
+  uploadedBy User     @relation("OwnerDocumentUploader", fields: [uploadedById], references: [id])
+
+  @@index([ownerId])
+  @@map("owner_documents")
+}
+
+model Deal {
+  id            String    @id @default(uuid()) @db.Uuid
+  listingId     String    @map("listing_id") @db.Uuid
+  customerId    String    @map("customer_id") @db.Uuid
+  agentId       String?   @map("agent_id") @db.Uuid
+  state         DealState @default(requested)
+  viewingAt     DateTime? @map("viewing_at")
+  outcomeReason String?   @map("outcome_reason")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  listing   Listing            @relation(fields: [listingId], references: [id])
+  customer  User               @relation("DealCustomer", fields: [customerId], references: [id])
+  agent     User?              @relation("DealAgent", fields: [agentId], references: [id])
+  events    DealEvent[]
+  documents CustomerDocument[]
+  agreement Agreement?
+  lease     Lease?
+
+  @@index([listingId, state])
+  @@index([customerId])
+  @@map("deals")
+}
+
+// Full state history — written by the state-machine layer on every
+// transition, never by hand (§3). Doubles as the funnel-analytics source.
+model DealEvent {
+  id        String     @id @default(uuid()) @db.Uuid
+  dealId    String     @map("deal_id") @db.Uuid
+  fromState DealState? @map("from_state") // null on deal creation
+  toState   DealState  @map("to_state")
+  actorId   String?    @map("actor_id") @db.Uuid // null when the system acts
+  note      String?
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  deal  Deal  @relation(fields: [dealId], references: [id])
+  actor User? @relation("DealEventActor", fields: [actorId], references: [id])
+
+  @@index([dealId])
+  @@map("deal_events")
+}
+
+// Attached per deal but hanging off the customer, enabling the phase-2
+// "verified renter" shortcut (§3).
+model CustomerDocument {
+  id           String               @id @default(uuid()) @db.Uuid
+  dealId       String               @map("deal_id") @db.Uuid
+  customerId   String               @map("customer_id") @db.Uuid
+  idType       CustomerDocumentType @map("id_type")
+  capturedVia  CapturedVia          @map("captured_via")
+  fileKey      String               @map("file_key")
+  status       DocumentReviewStatus @default(pending)
+  reviewedById String?              @map("reviewed_by") @db.Uuid
+  reviewedAt   DateTime?            @map("reviewed_at")
+  reviewNote   String?              @map("review_note")
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+
+  deal       Deal  @relation(fields: [dealId], references: [id])
+  customer   User  @relation("CustomerDocumentCustomer", fields: [customerId], references: [id])
+  reviewedBy User? @relation("CustomerDocumentReviewer", fields: [reviewedById], references: [id])
+
+  @@index([dealId])
+  @@index([customerId])
+  @@map("customer_documents")
+}
+
+model Agreement {
+  id            String    @id @default(uuid()) @db.Uuid
+  dealId        String    @unique @map("deal_id") @db.Uuid
+  pdfKey        String    @map("pdf_key")
+  signedScanKey String?   @map("signed_scan_key")
+  generatedAt   DateTime  @map("generated_at")
+  signedAt      DateTime? @map("signed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  deal Deal @relation(fields: [dealId], references: [id])
+
+  @@map("agreements")
+}
+
+model Lease {
+  id                 String      @id @default(uuid()) @db.Uuid
+  listingId          String      @map("listing_id") @db.Uuid
+  customerId         String      @map("customer_id") @db.Uuid
+  // Nullable: a renewal (§16) is a NEW lease with no originating deal — it
+  // links to the prior lease via renewedFromLeaseId instead.
+  dealId             String?     @unique @map("deal_id") @db.Uuid
+  startDate          DateTime    @map("start_date") @db.Date
+  termMonths         Int         @map("term_months")
+  endDate            DateTime    @map("end_date") @db.Date // derived: start_date + term_months (§16)
+  rentUsd            Decimal     @map("rent_usd") @db.Decimal(10, 2)
+  depositUsd         Decimal     @map("deposit_usd") @db.Decimal(10, 2)
+  renewedFromLeaseId String?     @unique @map("renewed_from_lease_id") @db.Uuid
+  status             LeaseStatus @default(active)
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+
+  listing         Listing   @relation(fields: [listingId], references: [id])
+  customer        User      @relation("LeaseCustomer", fields: [customerId], references: [id])
+  deal            Deal?     @relation(fields: [dealId], references: [id])
+  renewedFrom     Lease?    @relation("LeaseRenewal", fields: [renewedFromLeaseId], references: [id])
+  renewal         Lease?    @relation("LeaseRenewal")
+  payments        Payment[]
+
+  @@index([listingId, status])
+  @@map("leases")
+}
+
+model Payment {
+  id           String      @id @default(uuid()) @db.Uuid
+  leaseId      String      @map("lease_id") @db.Uuid
+  type         PaymentType
+  amountUsd    Decimal     @map("amount_usd") @db.Decimal(10, 2)
+  paidOn       DateTime    @map("paid_on") @db.Date
+  recordedById String      @map("recorded_by") @db.Uuid
+  note         String?
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  lease      Lease @relation(fields: [leaseId], references: [id])
+  recordedBy User  @relation("PaymentRecorder", fields: [recordedById], references: [id])
+
+  @@index([leaseId])
+  @@map("payments")
+}
+
+// Append-only at the application layer (§3, §9): the app exposes no update or
+// delete path. Records every document view and every verification decision.
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String
+  objectType String   @map("object_type")
+  objectId   String   @map("object_id") @db.Uuid
+  meta       Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([objectType, objectId])
+  @@map("audit_log")
+}
+
+model Notification {
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @map("user_id") @db.Uuid
+  channel   NotificationChannel
+  template  String
+  payload   Json                @default("{}")
+  sentAt    DateTime?           @map("sent_at")
+  readAt    DateTime?           @map("read_at")
+  // Idempotency key (phase 7): a retried job cannot double-send the same
+  // logical event. Recurring nudges bake the day into the key.
+  dedupeKey String?             @unique @map("dedupe_key")
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// Owner-initiated intake (§15) — never publicly visible.
+model Intake {
+  id              String       @id @default(uuid()) @db.Uuid
+  ownerUserId     String       @map("owner_user_id") @db.Uuid
+  agencyId        String       @map("agency_id") @db.Uuid
+  district        String
+  neighborhood    String?
+  type            ListingType
+  bedrooms        Int
+  bathrooms       Int
+  expectedRentUsd Decimal?     @map("expected_rent_usd") @db.Decimal(10, 2)
+  photos          String[]
+  docs            String[]
+  notes           String?
+  listingId       String?      @map("listing_id") @db.Uuid
+  status          IntakeStatus @default(submitted)
+  declineReason   String?      @map("decline_reason")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  ownerUser User     @relation("IntakeOwnerUser", fields: [ownerUserId], references: [id])
+  agency    Agency   @relation(fields: [agencyId], references: [id])
+  listing   Listing? @relation(fields: [listingId], references: [id])
+
+  @@index([agencyId, status])
+  @@map("intakes")
+}
+

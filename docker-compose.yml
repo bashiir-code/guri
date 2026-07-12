@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: guri-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-guri}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-guri_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-guri}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - guri_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-guri} -d ${POSTGRES_DB:-guri}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # R2-compatible object storage for local dev (prod = Cloudflare R2, SPEC §11).
+  minio:
+    image: minio/minio:latest
+    container_name: guri-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-guri}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-guri_dev_secret}
+      # Single-key KMS so the bucket can enforce encryption at rest (§9).
+      # R2 encrypts at rest by default; this mirrors that locally.
+      MINIO_KMS_SECRET_KEY: 'guri-dev-key:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY='
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - guri_minio:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $${MINIO_USER} $${MINIO_PASS} &&
+      mc mb -p local/$${BUCKET} &&
+      mc encrypt set sse-kms guri-dev-key local/$${BUCKET} || true;
+      exit 0"
+    environment:
+      MINIO_USER: ${S3_ACCESS_KEY_ID:-guri}
+      MINIO_PASS: ${S3_SECRET_ACCESS_KEY:-guri_dev_secret}
+      BUCKET: ${S3_BUCKET:-guri}
+
+volumes:
+  guri_pgdata:
+  guri_minio:
