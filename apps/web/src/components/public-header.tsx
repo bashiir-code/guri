@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { MapPin, Home, ListChecks, CircleUserRound } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
+import { Button } from '@/components/ui/button';
 import { RoleSwitcher } from '@/components/role-switcher';
 import { NotificationBell } from '@/components/notification-bell';
 import { BottomNav } from '@/components/bottom-nav';
@@ -46,18 +47,12 @@ export function PublicHeader() {
         </Link>
         <nav className="flex items-center gap-2.5">
           <RoleSwitcher />
-          <Link
-            href="/agencies"
-            className="hidden whitespace-nowrap text-sm font-medium text-forest underline-offset-4 hover:underline md:inline"
-          >
-            {t('listYourHouse')}
-          </Link>
-          <Link
-            href="/requests"
-            className="hidden whitespace-nowrap text-sm font-medium text-forest underline-offset-4 hover:underline md:inline"
-          >
-            {t('myRequests')}
-          </Link>
+          <Button asChild variant="outline" size="sm" className="hidden text-forest md:inline-flex">
+            <Link href="/agencies">{t('listYourHouse')}</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="hidden text-forest md:inline-flex">
+            <Link href="/requests">{t('myRequests')}</Link>
+          </Button>
           <NotificationBell locale={locale} />
           <LocaleToggle />
         </nav>
