@@ -21,3 +21,12 @@ apps/web/public/swe-worker*.js
 *.log
 coverage/
 .DS_Store
+
+# design-sync — staged scripts, build output, machine state (previews/ and config ARE committed)
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+apps/web/.ds-css/
+apps/web/.ds-fonts/

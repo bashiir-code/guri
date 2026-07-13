@@ -1,0 +1,26 @@
+{
+  "projectId": "e0b002e3-d3ee-4486-9c2a-d5f1103fe9c0",
+  "shape": "package",
+  "pkg": "@guri/web",
+  "globalName": "Guri",
+  "entry": "apps/web/dist/index.js",
+  "srcDir": "src/components/ui",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": ".ds-css/guri.css",
+  "extraFonts": [
+    ".ds-fonts/fonts.css"
+  ],
+  "buildCmd": "node .design-sync/build-css.mjs",
+  "componentSrcMap": {
+    "CardHeader": null,
+    "CardTitle": null,
+    "CardDescription": null,
+    "CardContent": null
+  },
+  "overrides": {
+    "Textarea": {
+      "cardMode": "column"
+    }
+  },
+  "readmeHeader": ".design-sync/conventions.md"
+}
