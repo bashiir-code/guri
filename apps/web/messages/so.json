@@ -8,6 +8,7 @@
     "myRequests": "Codsiyadayda",
     "listYourHouse": "Liis-geli gurigaaga",
     "navBrowse": "Daawo",
+    "navList": "Liis-geli",
     "navProfile": "Akoonka",
     "browseCta": "Daawo guryaha",
     "browseHint": "Si xor ah u daawo — waxaad gashaa marka aad guri codsanayso oo keliya"
@@ -248,7 +249,10 @@
     "notStaff": "Akoonkani wakaalad kuma jiro. Weydiiso maamulaha wakaaladdaada inuu kugu daro email-kaaga.",
     "backHome": "Ku noqo bogga hore",
     "subtitle": "Konsoolka wakaaladda",
-    "roles": { "admin": "Madaxa wakaaladda", "agent": "Wakiil" },
+    "roles": {
+      "admin": "Madaxa wakaaladda",
+      "agent": "Wakiil"
+    },
     "nav": {
       "dashboard": "Dashboard",
       "listings": "Guryaha",
@@ -301,7 +305,12 @@
       "successTitle": "Waa la diray!",
       "successBody": "Wakaaladdu waxay heshay codsigaaga. Dhawaan way kula soo xiriiri doonaan.",
       "viewStatus": "La soco",
-      "typeLabels": { "apartment": "Apartment", "house": "Guri", "room": "Qol", "villa": "Villa" }
+      "typeLabels": {
+        "apartment": "Apartment",
+        "house": "Guri",
+        "room": "Qol",
+        "villa": "Villa"
+      }
     },
     "tracker": {
       "title": "Codsiyadayda",
@@ -599,12 +608,20 @@
     "backHome": "Ku noqo bogga hore",
     "adminBadge": "Maamulka platform-ka",
     "signOut": "Ka bax",
-    "nav": { "agencies": "Wakaaladaha", "audit": "Hubinta", "metrics": "Tirakoob" },
+    "nav": {
+      "agencies": "Wakaaladaha",
+      "audit": "Hubinta",
+      "metrics": "Tirakoob"
+    },
     "approve": "Ansixi",
     "reactivate": "Dib u daar",
     "suspend": "Hakii",
     "noAgencies": "Weli wakaalad ma jirto.",
-    "status": { "active": "Firfircoon", "pending": "La sugayo", "suspended": "La hakiyay" },
+    "status": {
+      "active": "Firfircoon",
+      "pending": "La sugayo",
+      "suspended": "La hakiyay"
+    },
     "auditView": {
       "title": "Hubinta heshiiska",
       "searchPlaceholder": "Ku dheji ID-ga heshiiska",
@@ -617,22 +634,52 @@
       "noAccess": "Wax gelitaan dukumenti ah lama diiwaangelin.",
       "by": "{actor}",
       "actions": {
-        "document": { "url_issued": "Wuxuu arkay aqoonsiga macmiilka" },
-        "agreement": { "url_issued": "Wuxuu arkay heshiiska" },
-        "deal": { "verify_approved": "Wuu ansixiyay aqoonsiga", "verify_rejected": "Wuu diiday aqoonsiga" }
+        "document": {
+          "url_issued": "Wuxuu arkay aqoonsiga macmiilka"
+        },
+        "agreement": {
+          "url_issued": "Wuxuu arkay heshiiska"
+        },
+        "deal": {
+          "verify_approved": "Wuu ansixiyay aqoonsiga",
+          "verify_rejected": "Wuu diiday aqoonsiga"
+        }
       },
-      "idType": { "national_id": "Aqoonsi qaran", "passport": "Baasaboor" },
-      "capturedVia": { "camera": "Kamarad", "gallery": "Gallery" },
-      "docStatus": { "pending": "La sugayo", "approved": "La ansixiyay", "rejected": "La diiday" }
+      "idType": {
+        "national_id": "Aqoonsi qaran",
+        "passport": "Baasaboor"
+      },
+      "capturedVia": {
+        "camera": "Kamarad",
+        "gallery": "Gallery"
+      },
+      "docStatus": {
+        "pending": "La sugayo",
+        "approved": "La ansixiyay",
+        "rejected": "La diiday"
+      }
     },
     "metricsView": {
       "title": "Tirakoob",
       "empty": "Weli wakaalad ma jirto.",
-      "status": { "active": "Firfircoon", "pending": "La sugayo", "suspended": "La hakiyay" },
-      "funnel": { "requested": "La codsaday", "viewed": "La daawaday", "closed": "La xiray" },
+      "status": {
+        "active": "Firfircoon",
+        "pending": "La sugayo",
+        "suspended": "La hakiyay"
+      },
+      "funnel": {
+        "requested": "La codsaday",
+        "viewed": "La daawaday",
+        "closed": "La xiray"
+      },
       "medianDaysToRent": "Celceliska maalmaha kirada",
       "days": "{days} maalmood",
-      "listing": { "available": "bannaan", "reserved": "la qabtay", "rented": "la kiraystay", "draft": "qabyo" }
+      "listing": {
+        "available": "bannaan",
+        "reserved": "la qabtay",
+        "rented": "la kiraystay",
+        "draft": "qabyo"
+      }
     },
     "createAgency": "Samee wakaalad",
     "createButton": "Samee wakaaladda",
