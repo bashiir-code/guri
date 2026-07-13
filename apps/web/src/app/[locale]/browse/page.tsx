@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { SlidersHorizontal } from 'lucide-react';
+import { House, SlidersHorizontal } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -55,6 +55,7 @@ function queryString(f: BrowseFilters, page: number) {
 // Laptop: persistent filter sidebar + three-column grid — no sheet needed.
 export default function BrowsePage() {
   const t = useTranslations('browse');
+  const tc = useTranslations('common');
   const tt = useTranslations('listings.types');
   const [filters, setFilters] = useState<BrowseFilters>(EMPTY_FILTERS);
   const [draft, setDraft] = useState<BrowseFilters>(EMPTY_FILTERS);
@@ -159,7 +160,22 @@ export default function BrowsePage() {
             </ul>
           )}
           {!query.isLoading && items.length === 0 && (
-            <p className="py-12 text-center text-muted-foreground">{t('empty')}</p>
+            <div className="flex flex-col items-center gap-4 py-14 text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-forest/[0.06]">
+                <House className="h-7 w-7 text-forest/50" aria-hidden />
+              </span>
+              <p className="max-w-xs text-muted-foreground">{t('empty')}</p>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {JSON.stringify(filters) !== JSON.stringify(EMPTY_FILTERS) && (
+                  <Button variant="outline" size="sm" className="text-forest" onClick={clear}>
+                    {t('clear')}
+                  </Button>
+                )}
+                <Button asChild variant="outline" size="sm" className="text-forest">
+                  <Link href="/agencies">{tc('listYourHouse')}</Link>
+                </Button>
+              </div>
+            </div>
           )}
 
           <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

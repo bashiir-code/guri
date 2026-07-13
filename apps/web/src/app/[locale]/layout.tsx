@@ -6,6 +6,7 @@ import { getMessages } from 'next-intl/server';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Bricolage_Grotesque, Inter } from 'next/font/google';
 import { routing } from '@/i18n/routing';
+import { clerkAppearance, getClerkLocalization } from '@/lib/clerk-theme';
 import { Providers } from '@/components/providers';
 import '../globals.css';
 
@@ -44,7 +45,11 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <ClerkProvider afterSignOutUrl={`/${locale}`}>
+    <ClerkProvider
+      afterSignOutUrl={`/${locale}`}
+      appearance={clerkAppearance}
+      localization={getClerkLocalization(locale)}
+    >
       <html lang={locale}>
         <body className={`${inter.variable} ${bricolage.variable} min-h-dvh font-sans`}>
           <NextIntlClientProvider messages={messages}>
