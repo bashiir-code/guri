@@ -37,8 +37,10 @@ const so: ClerkLocalization = {
   formButtonPrimary: 'Sii wad',
   backButton: 'Dib u noqo',
   formFieldLabel__emailAddress: 'Email-ka',
+  formFieldLabel__emailAddress_username: 'Email-ka ama username-ka',
   formFieldLabel__password: 'Password-ka',
   formFieldInputPlaceholder__emailAddress: 'Geli email-kaaga',
+  formFieldInputPlaceholder__emailAddress_username: 'Geli email ama username',
   formFieldAction__forgotPassword: 'Password-ka ma ilowday?',
   signIn: {
     start: {
