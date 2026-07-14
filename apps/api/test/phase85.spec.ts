@@ -196,7 +196,8 @@ describe('ListingsService.publicList — suspended agencies drop out of browse (
       $transaction: async (ops: Promise<unknown>[]) => Promise.all(ops),
       listing: {
         count: async ({ where }: AnyRow) => listings.filter((l) => matches(l, where)).length,
-        findMany: async ({ where }: AnyRow) => listings.filter((l) => matches(l, where)),
+        findMany: async ({ where }: AnyRow) =>
+          listings.filter((l) => matches(l, where)).map((l) => ({ ...l, agency: { name: 'Agency A' } })),
         aggregate: async () => ({ _max: { rentUsd: 500, bedrooms: 3 } }),
       },
     } as unknown as PrismaService;

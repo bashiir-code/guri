@@ -147,7 +147,10 @@ function makeWorld() {
           agency: agencies.find((a) => a.id === l.agencyId),
         };
       },
-      findMany: async ({ where }: AnyRow) => listings.filter((l) => matchListing(l, where)),
+      findMany: async ({ where }: AnyRow) =>
+        listings
+          .filter((l) => matchListing(l, where))
+          .map((l) => ({ ...l, agency: agencies.find((a) => a.id === l.agencyId) })),
       count: async ({ where }: AnyRow) => listings.filter((l) => matchListing(l, where)).length,
       aggregate: async () => ({ _max: { rentUsd: 500, bedrooms: 3 } }),
       update: async ({ where, data }: AnyRow) => {
