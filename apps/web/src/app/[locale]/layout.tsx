@@ -2,12 +2,13 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Bricolage_Grotesque, Inter } from 'next/font/google';
 import { routing } from '@/i18n/routing';
 import { clerkAppearance, getClerkLocalization } from '@/lib/clerk-theme';
 import { Providers } from '@/components/providers';
+import { CookieConsent } from '@/components/cookie-consent';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -43,6 +44,7 @@ export default async function LocaleLayout({
     notFound();
   }
   const messages = await getMessages();
+  const t = await getTranslations({ locale, namespace: 'common' });
 
   return (
     <ClerkProvider
@@ -53,7 +55,16 @@ export default async function LocaleLayout({
       <html lang={locale}>
         <body className={`${inter.variable} ${bricolage.variable} min-h-dvh font-sans`}>
           <NextIntlClientProvider messages={messages}>
-            <Providers>{children}</Providers>
+            <Providers>
+              <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-forest focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-mist"
+              >
+                {t('skipToContent')}
+              </a>
+              <div id="main-content">{children}</div>
+              <CookieConsent />
+            </Providers>
           </NextIntlClientProvider>
         </body>
       </html>

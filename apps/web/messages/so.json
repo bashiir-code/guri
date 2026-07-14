@@ -11,8 +11,33 @@
     "navList": "Liis-geli",
     "navProfile": "Akoonka",
     "verifiedAgency": "Wakaalad la hubiyay",
+    "skipToContent": "U bood content-ka",
     "browseCta": "Daawo guryaha",
     "browseHint": "Si xor ah u daawo — waxaad gashaa marka aad guri codsanayso oo keliya"
+  },
+  "footer": {
+    "tagline": "Kiro adeeg wakaalado la hubiyay oo Muqdisho ah.",
+    "rights": "© {year} Guri. Dhammaan xuquuqda way dhowran yihiin.",
+    "legalHeading": "Sharciga",
+    "companyHeading": "Guri",
+    "privacy": "Qaanuunka Asturnaanta",
+    "terms": "Shuruudaha Adeegga",
+    "cookies": "Qaanuunka Cookie-ga",
+    "accessibility": "Helitaanka",
+    "licenses": "Liisanka open-source",
+    "contact": "Xiriir & taageero"
+  },
+  "cookies": {
+    "message": "Guri wuxuu isticmaalaa oo keliya cookie muhiim ah si aad u sii gasho. Ma isticmaalno cookie xayeysiis ama dabagal.",
+    "accept": "Waan fahmay",
+    "learnMore": "Wax dheeraad ah baro"
+  },
+  "legal": {
+    "backHome": "Ku noqo Guri",
+    "lastUpdated": "Waxaa la cusboonaysiiyay {date}",
+    "indexTitle": "Sharci & taageero",
+    "indexSubtitle": "Qaanuunnada, xuquuqdaada, iyo sida aad noola soo xiriiri karto.",
+    "toc": "Boggan"
   },
   "home": {
     "eyebrow": "Guri · wakaalado la hubiyay",

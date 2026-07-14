@@ -19,6 +19,8 @@ import { BottomSheet } from '@/components/bottom-sheet';
 // never a credential (rule 14).
 export function ProfileCard() {
   const t = useTranslations('profile');
+  const tf = useTranslations('footer');
+  const tl = useTranslations('legal');
   const qc = useQueryClient();
   const { signOut } = useClerk();
   const { data: me, isLoading, isFetching, refetch } = useMe();
@@ -131,6 +133,8 @@ export function ProfileCard() {
       <Card className="mt-4">
         <CardContent className="divide-y p-0">
           <ProfileRow href="/requests" label={t('myRequests')} />
+          <ProfileRow href="/legal" label={tl('indexTitle')} />
+          <ProfileRow href="/legal/contact" label={tf('contact')} />
         </CardContent>
       </Card>
 

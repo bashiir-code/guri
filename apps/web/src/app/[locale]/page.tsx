@@ -5,6 +5,7 @@ import { use } from 'react';
 import { Link } from '@/i18n/navigation';
 import { ProfileCard } from '@/components/profile-card';
 import { PublicHeader } from '@/components/public-header';
+import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -53,6 +54,8 @@ function Home() {
           </SignedOut>
         </section>
       </div>
+
+      <SiteFooter />
     </main>
   );
 }

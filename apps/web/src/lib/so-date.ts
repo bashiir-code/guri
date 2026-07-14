@@ -44,3 +44,9 @@ export function formatMonthYear(date: Date, locale: string): string {
   if (locale === 'so') return `${SO_MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}`;
   return new Intl.DateTimeFormat('en', { month: 'short', year: 'numeric' }).format(date);
 }
+
+/** "15 Luulyo 2026" (so) / "15 July 2026" (en) — legal "last updated" lines. */
+export function formatDate(date: Date, locale: string): string {
+  if (locale === 'so') return `${date.getDate()} ${SO_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+  return new Intl.DateTimeFormat('en', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+}

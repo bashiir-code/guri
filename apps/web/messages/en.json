@@ -11,8 +11,33 @@
     "navList": "List home",
     "navProfile": "Profile",
     "verifiedAgency": "Verified agency",
+    "skipToContent": "Skip to content",
     "browseCta": "Browse homes",
     "browseHint": "Look around freely — sign in only when you request a house"
+  },
+  "footer": {
+    "tagline": "Rentals through verified agencies in Mogadishu.",
+    "rights": "© {year} Guri. All rights reserved.",
+    "legalHeading": "Legal",
+    "companyHeading": "Guri",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy",
+    "accessibility": "Accessibility",
+    "licenses": "Open-source licenses",
+    "contact": "Contact & support"
+  },
+  "cookies": {
+    "message": "Guri uses only essential cookies to keep you signed in. We don't use advertising or tracking cookies.",
+    "accept": "Got it",
+    "learnMore": "Learn more"
+  },
+  "legal": {
+    "backHome": "Back to Guri",
+    "lastUpdated": "Last updated {date}",
+    "indexTitle": "Legal & support",
+    "indexSubtitle": "Policies, your rights, and how to reach us.",
+    "toc": "On this page"
   },
   "home": {
     "eyebrow": "Guri · verified agencies",
