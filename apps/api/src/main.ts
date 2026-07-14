@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { initSentry } from './common/sentry';
 
@@ -13,6 +14,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true, bufferLogs: true });
   // Route ALL Nest logs through structured, redacted pino (§9).
   app.useLogger(app.get(Logger));
+  // Standard security headers (HSTS, nosniff, frame denial, …). The API only
+  // serves JSON + the agreement PDF; helmet's defaults are safe for both, and
+  // CORS above still governs which browsers may call it.
+  app.use(helmet());
   // CORS allowlist: comma-separated so apex + www (e.g.
   // "https://getguri.com,https://www.getguri.com") both pass.
   app.enableCors({

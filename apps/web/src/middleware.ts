@@ -19,5 +19,7 @@ export default clerkConfigured
   : handleI18n;
 
 export const config = {
-  matcher: ['/((?!_next|.*\\..*).*)'],
+  // /api is excluded so route handlers (e.g. the Railway healthcheck at
+  // /api/health) aren't locale-redirected by the i18n middleware.
+  matcher: ['/((?!api|_next|.*\\..*).*)'],
 };

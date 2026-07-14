@@ -21,6 +21,19 @@ const serwist = new Serwist({
   // not cached here — NEXT_PUBLIC_API_URL is a different origin, which
   // defaultCache already treats as network-only.
   runtimeCaching: defaultCache,
+  // When a navigation fails entirely (no network, nothing cached), serve the
+  // bilingual offline page instead of the browser error. The /so URL is just
+  // the precache key — the page itself shows both languages.
+  fallbacks: {
+    entries: [
+      {
+        url: '/so/offline',
+        matcher({ request }) {
+          return request.destination === 'document';
+        },
+      },
+    ],
+  },
 });
 
 serwist.addEventListeners();
