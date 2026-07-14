@@ -21,7 +21,7 @@ export function ProfileCard() {
   const t = useTranslations('profile');
   const qc = useQueryClient();
   const { signOut } = useClerk();
-  const { data: me, isLoading } = useMe();
+  const { data: me, isLoading, isFetching, refetch } = useMe();
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -51,8 +51,23 @@ export function ProfileCard() {
   const leaveBlocked =
     leave.error instanceof ApiError && leave.error.status === 409 ? leave.error.message : null;
 
-  if (isLoading || !me) {
+  if (isLoading) {
     return <Card className="animate-pulse"><CardContent className="h-48 p-6" /></Card>;
+  }
+  // The /me call resolved without data — the API is unreachable or erroring
+  // (e.g. a cold container or a CORS/env misconfig). Show a retry instead of an
+  // endless skeleton so the state is visible and self-healing.
+  if (!me) {
+    return (
+      <Card>
+        <CardContent className="space-y-3 p-6 text-center">
+          <p className="text-sm text-slate_brand">{t('loadError')}</p>
+          <Button variant="outline" disabled={isFetching} onClick={() => void refetch()}>
+            {isFetching ? t('loadRetrying') : t('loadRetry')}
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   const isStaff = me.roles.agencyMemberships.length > 0;
