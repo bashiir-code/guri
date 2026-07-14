@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      # Build-time stand-ins only — real values live in the Railway dashboard.
+      # The publishable key is a syntactically valid dummy so ClerkProvider
+      # can prerender the sign-in/up pages (base64 of "clerk.example.com$").
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      NEXT_PUBLIC_SITE_URL: https://getguri.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # version comes from package.json "packageManager"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (shared, api, web)
+        run: pnpm -r build
+
+      - name: API tests
+        run: pnpm --filter @guri/api test
