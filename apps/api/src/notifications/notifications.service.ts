@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SMS_PORT, SmsPort } from './sms.port';
 import { renderSms, type NotificationLocale, type TemplateParams } from './templates';
 
-const BELL_PAGE_SIZE = 20;
+const BELL_PAGE_SIZE = 5;
 
 @Injectable()
 export class NotificationsService {
