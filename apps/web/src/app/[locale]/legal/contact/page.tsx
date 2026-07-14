@@ -6,7 +6,7 @@ import { LegalTitle } from '@/components/legal-ui';
 
 const SUPPORT_EMAIL = 'support@getguri.com';
 const PRIVACY_EMAIL = 'privacy@getguri.com';
-const WHATSAPP = '+252613111222';
+const WHATSAPP = '+358 44 988 6596';
 
 export default function ContactPage() {
   const locale = useLocale();
