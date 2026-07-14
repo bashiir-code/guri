@@ -123,26 +123,54 @@ function Wizard() {
   return (
     <>
       <PublicHeader />
-      <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-6">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-forest">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('step', { n: step + 1 })}</p>
-          <div className="mt-3 flex gap-1.5">
-            {steps.map((s, i) => (
-              <div
-                key={s}
-                className={cn('h-1.5 flex-1 rounded-full', i <= step ? 'bg-lime' : 'bg-muted')}
-              />
-            ))}
+      <main className="mx-auto w-full max-w-xl px-4 py-6 md:max-w-2xl md:py-8 lg:max-w-5xl lg:py-10">
+        <div className="lg:grid lg:grid-cols-[260px_1fr] lg:items-start lg:gap-10">
+          {/* Progress: horizontal bars on phone/tablet, a vertical step rail on desktop. */}
+          <div className="mb-6 lg:mb-0 lg:sticky lg:top-8">
+            <h1 className="font-display text-2xl font-bold text-forest lg:text-3xl">{t('title')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('step', { n: step + 1 })}</p>
+            <div className="mt-3 flex gap-1.5 lg:hidden">
+              {steps.map((s, i) => (
+                <div
+                  key={s}
+                  className={cn('h-1.5 flex-1 rounded-full', i <= step ? 'bg-lime' : 'bg-muted')}
+                />
+              ))}
+            </div>
+            <ol className="mt-6 hidden flex-col gap-1 lg:flex">
+              {steps.map((s, i) => (
+                <li
+                  key={s}
+                  className={cn(
+                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold',
+                    i === step
+                      ? 'bg-lime/[0.18] text-forest'
+                      : i < step
+                        ? 'text-forest'
+                        : 'text-muted-foreground',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'grid h-6 w-6 flex-none place-items-center rounded-full text-xs font-bold',
+                      i <= step ? 'bg-forest text-lime' : 'bg-muted text-muted-foreground',
+                    )}
+                  >
+                    {i < step ? '✓' : i + 1}
+                  </span>
+                  {s}
+                </li>
+              ))}
+            </ol>
           </div>
-        </div>
 
-        <div className="rounded-card border bg-card p-5">
+          <div className="space-y-6">
+            <div className="rounded-card border bg-card p-5 md:p-6">
           <h2 className="mb-4 font-display text-lg font-bold text-forest">{steps[step]}</h2>
 
           {step === 0 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="district">{t('district')}</Label>
                   <Select id="district" value={district} onChange={(e) => setDistrict(e.target.value)}>
@@ -159,7 +187,7 @@ function Wizard() {
                   <Input id="neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="type">{t('type')}</Label>
                   <Select id="type" value={type} onChange={(e) => setType(e.target.value as ListingType)}>
@@ -208,7 +236,7 @@ function Wizard() {
                 {t('addPhotos')}
               </Button>
               {photoError && <p className="text-sm text-destructive">{t('photosRequired')}</p>}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {previews.map((src, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img key={src} src={src} alt="" className="aspect-square w-full rounded-xl object-cover"
@@ -295,6 +323,8 @@ function Wizard() {
               {submit.isPending ? t('submitting') : t('submit')}
             </Button>
           )}
+            </div>
+          </div>
         </div>
       </main>
     </>

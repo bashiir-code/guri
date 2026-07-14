@@ -1,21 +1,21 @@
 import { SignUp } from '@clerk/nextjs';
 import { setRequestLocale } from 'next-intl/server';
 import { use } from 'react';
-import { PublicHeader } from '@/components/public-header';
+import { AuthShell } from '@/components/auth-shell';
 
+// Signing up always makes you a customer (rule 15) — Clerk's prebuilt widget
+// in the Guri brand chrome. No "sign up as an agency" path exists.
 export default function SignUpPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = use(params);
   setRequestLocale(locale);
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-[480px] px-4 py-4">
-      <PublicHeader />
-      <div className="flex justify-center py-6 animate-rise-in">
-        <SignUp
-          routing="hash"
-          signInUrl={`/${locale}/sign-in`}
-          fallbackRedirectUrl={`/${locale}/welcome`}
-        />
-      </div>
-    </main>
+    <AuthShell>
+      <SignUp
+        routing="hash"
+        signInUrl={`/${locale}/sign-in`}
+        fallbackRedirectUrl={`/${locale}/welcome`}
+        appearance={{ elements: { rootBox: 'w-full', cardBox: 'w-full', card: '!w-full' } }}
+      />
+    </AuthShell>
   );
 }

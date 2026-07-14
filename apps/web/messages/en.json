@@ -10,6 +10,7 @@
     "navBrowse": "Browse",
     "navList": "List home",
     "navProfile": "Profile",
+    "verifiedAgency": "Verified agency",
     "browseCta": "Browse homes",
     "browseHint": "Look around freely — sign in only when you request a house"
   },
@@ -22,6 +23,8 @@
   },
   "browse": {
     "title": "Homes for rent",
+    "subtitle": "Every home listed by a verified agency",
+    "searchPlaceholder": "Search by home or district…",
     "filters": "Filters",
     "district": "District",
     "rent": "Rent (USD/month)",
@@ -49,6 +52,14 @@
     "back": "Back",
     "notFound": "This listing is no longer available.",
     "perMonth": "/month",
+    "title": "{beds}-bed {type}",
+    "aboutTitle": "About this home",
+    "verified": "Verified",
+    "homesCount": "{count} homes",
+    "statBeds": "Beds",
+    "statBaths": "Baths",
+    "statArea": "Area",
+    "statType": "Type",
     "beds": "beds",
     "baths": "baths",
     "deposit": "Deposit",
@@ -79,6 +90,18 @@
     "signinButton": "Sign in",
     "bedsShort": "bd",
     "viewingOn": "Viewing: {date}",
+    "bannerTitle": "Your request was sent!",
+    "bannerBody": "The agency will contact you · Request sent",
+    "stepOf": "Step {n}/{total}",
+    "captureId": "Capture your ID photo",
+    "steps": {
+      "requested": { "label": "Requested", "sub": "Your request is in the queue" },
+      "viewing_scheduled": { "label": "Viewing scheduled", "sub": "The agency set a viewing time" },
+      "awaiting_docs": { "label": "Awaiting documents", "sub": "Capture your national ID or passport with the camera" },
+      "docs_in_review": { "label": "Documents in review", "sub": "The agency is reviewing your ID" },
+      "approved": { "label": "Approved", "sub": "The agreement is being prepared" },
+      "closed": { "label": "Rented", "sub": "Your tenancy is confirmed" }
+    },
     "withdraw": "Withdraw",
     "withdrawTitle": "Withdraw this request?",
     "withdrawBody": "The agency will no longer see it. You can request this home again later.",
@@ -141,18 +164,30 @@
   "owner": {
     "notOwner": "This account has no properties on Guri. If an agency invited you, sign in with the email on the invite.",
     "backHome": "Back to home",
+    "portal": "Owner portal",
+    "portalRole": "Owner",
     "nav": {
       "dashboard": "Overview",
       "properties": "Properties",
       "income": "Income",
       "listHouse": "List a house",
       "submissions": "My submissions",
-      "signOut": "Sign out"
+      "signOut": "Sign out",
+      "menu": "Open menu",
+      "close": "Close menu",
+      "expand": "Expand menu",
+      "collapse": "Collapse"
     },
     "heroEyebrow": "Owner",
     "greeting": "Welcome back, {name}",
     "greetingAnon": "Welcome back",
     "greetingSub": "Here's how your properties are doing.",
+    "dashboard": {
+      "subtitle": "{count, plural, one {# property} other {# properties}} on Guri",
+      "paymentsReceived": "{count, plural, =0 {No payments yet this month} one {# payment received this month} other {# payments received this month}}",
+      "recentPayments": "Recent payments",
+      "viewAll": "View all"
+    },
     "metrics": {
       "properties": "Properties",
       "occupied": "Occupied",
@@ -167,13 +202,16 @@
     },
     "properties": {
       "title": "Your properties",
+      "subtitle": "Homes your agencies manage for you",
       "listAnother": "List a house",
       "comingSoon": "Bring a house to an agency",
       "emptyTitle": "No properties yet",
       "emptyBody": "When your agency publishes your home, it appears here.",
       "perMonth": "/month",
       "bedsShort": "bd",
-      "daysToEnd": "{days} days left"
+      "daysToEnd": "{days} days left",
+      "tenant": "Tenant",
+      "statusLabel": "Status"
     },
     "detail": {
       "back": "All properties",
@@ -189,6 +227,7 @@
     },
     "income": {
       "title": "Income",
+      "subtitle": "Rent collected on your homes",
       "property": "Property",
       "allProperties": "All properties",
       "month": "Month",
@@ -196,6 +235,10 @@
       "propertyCol": "Property",
       "type": "Type",
       "amount": "Amount",
+      "filterAll": "All",
+      "filterThisMonth": "This month",
+      "received": "Received",
+      "totalReceived": "Total received",
       "emptyTitle": "No payments yet",
       "emptyBody": "Payments your agency records will show up here."
     }
@@ -205,6 +248,15 @@
     "subtitle": "Continue with Google, or use email and password",
     "signInCta": "Sign in",
     "signUpCta": "Create an account"
+  },
+  "auth": {
+    "tagline": "Mogadishu rentals",
+    "brandTitle": "Find a home you can trust.",
+    "brandSubtitle": "Every home on Guri is listed by a verified agency in Mogadishu.",
+    "point1": "Verified agencies only",
+    "point2": "Your ID is checked only when a deal closes",
+    "point3": "One account for every role",
+    "backHome": "Back to home"
   },
   "profile": {
     "title": "Your profile",
@@ -248,6 +300,7 @@
     "loading": "Loading…",
     "notStaff": "This account doesn't belong to an agency. Ask your agency admin to add you by email.",
     "backHome": "Back to home",
+    "brand": "Guri console",
     "subtitle": "Agency console",
     "roles": {
       "admin": "Agency head",
@@ -261,7 +314,11 @@
       "owners": "Owners",
       "staff": "Staff",
       "more": "More",
-      "signOut": "Sign out"
+      "signOut": "Sign out",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "close": "Close",
+      "menu": "Menu"
     }
   },
   "intake": {
@@ -380,11 +437,28 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "greeting": "Good day, {name}",
+    "newListing": "List a new home",
     "unanswered": "Unanswered requests",
     "awaitingDocs": "Deals awaiting documents",
     "listings": "Listings by status",
     "todaysViewings": "Today's viewings",
-    "noViewings": "No viewings scheduled for today."
+    "noViewings": "No viewings scheduled for today.",
+    "statActiveListings": "Active listings",
+    "statNewLeads": "New leads",
+    "statViewingsWeek": "Viewings this week",
+    "statRentMonth": "Rent this month",
+    "newLeadsTitle": "New leads",
+    "viewAll": "View all",
+    "noLeads": "No new leads yet.",
+    "portfolioTitle": "Portfolio",
+    "stage": {
+      "requested": "New",
+      "viewing_scheduled": "Viewing",
+      "awaiting_docs": "Awaiting docs",
+      "docs_in_review": "In review",
+      "approved": "Approved"
+    }
   },
   "queue": {
     "title": "Requests",
@@ -607,18 +681,56 @@
     "notAdmin": "This account is not a platform admin.",
     "backHome": "Back to home",
     "adminBadge": "Platform admin",
+    "brand": "Guri admin",
+    "portal": "Platform console",
+    "portalRole": "Admin · Platform",
     "signOut": "Sign out",
     "nav": {
+      "overview": "Overview",
       "agencies": "Agencies",
       "audit": "Audit",
-      "metrics": "Metrics"
+      "metrics": "Metrics",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "close": "Close",
+      "menu": "Menu"
     },
+    "overview": {
+      "title": "Market overview",
+      "subtitle": "Metrics overview",
+      "kpiAgencies": "Active agencies",
+      "kpiAgenciesDelta": "{count} pending",
+      "kpiListings": "Active listings",
+      "kpiTenancies": "Active tenancies",
+      "kpiRent": "Rent tracked",
+      "deltaThisMonth": "+{count} this month",
+      "thisMonth": "this month",
+      "chartTitle": "New tenancies per month",
+      "districtsTitle": "Listings by district",
+      "noDistricts": "No published listings yet.",
+      "otherDistricts": "Other",
+      "pendingTitle": "Pending approvals",
+      "pendingBody": "{count, plural, =1 {agency is awaiting verification} other {agencies are awaiting verification}}",
+      "pendingCta": "Review agencies",
+      "funnelsTitle": "Per-agency performance"
+    },
+    "agenciesSubtitle": "All agencies on the market",
+    "searchAgencies": "Search agencies…",
+    "filterAll": "All",
+    "colAgency": "Agency",
+    "colStatus": "Status",
+    "colListings": "Listings",
+    "colTenancies": "Tenancies",
+    "colRent": "Rent this month",
+    "colJoined": "Joined",
+    "verify": "Verify",
+    "verifyLong": "Verify this agency",
     "approve": "Approve",
     "reactivate": "Reactivate",
     "suspend": "Suspend",
     "noAgencies": "No agencies yet.",
     "status": {
-      "active": "Active",
+      "active": "Verified",
       "pending": "Pending",
       "suspended": "Suspended"
     },

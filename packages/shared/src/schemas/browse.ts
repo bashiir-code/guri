@@ -8,6 +8,8 @@ export const BROWSE_PAGE_SIZE = 12;
 
 // Public browse filters (SPEC §5 customer screen 2 / §6 GET /listings).
 export const browseQuerySchema = z.object({
+  // Free-text search over district / neighborhood (SPEC §5 "Raadi guri ama degmo").
+  q: z.string().trim().min(1).max(80).optional(),
   district: z.string().trim().min(1).max(60).optional(),
   minRent: z.coerce.number().min(0).optional(),
   maxRent: z.coerce.number().min(0).optional(),

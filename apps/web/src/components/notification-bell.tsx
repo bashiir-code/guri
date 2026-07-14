@@ -74,7 +74,9 @@ export function NotificationBell({ locale }: { locale: string }) {
       {open && (
         <>
           <button aria-label="close" className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="animate-rise-in absolute right-0 z-50 mt-2 max-h-[70dvh] w-80 overflow-y-auto rounded-card border bg-card p-2 shadow-xl">
+          {/* Mobile: pinned to the viewport with side margins so it can never
+              overflow the screen. Tablet/desktop: anchored under the bell. */}
+          <div className="animate-rise-in fixed inset-x-3 top-16 z-50 max-h-[70dvh] overflow-y-auto rounded-card border bg-card p-2 shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80">
             <p className="px-3 py-2 font-display text-sm font-bold text-forest">{t('title')}</p>
             {!data?.items.length && (
               <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t('empty')}</p>

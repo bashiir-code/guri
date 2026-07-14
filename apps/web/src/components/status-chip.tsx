@@ -28,3 +28,36 @@ export function StatusChip({
     </span>
   );
 }
+
+// Solid variant from the Guri Owner design: forest = available,
+// slate = rented, amber = reserved (the only amber in the app).
+const solid: Record<string, string> = {
+  draft: 'bg-forest/10 text-slate_brand',
+  available: 'bg-forest text-mist',
+  reserved: 'bg-amber_reserved text-forest',
+  rented: 'bg-slate_brand text-mist',
+};
+
+export function SolidStatusChip({
+  status,
+  publishedAt,
+  className,
+}: {
+  status: 'available' | 'reserved' | 'rented';
+  publishedAt: string | Date | null;
+  className?: string;
+}) {
+  const t = useTranslations('listings.status');
+  const effective = publishedAt ? status : 'draft';
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold',
+        solid[effective],
+        className,
+      )}
+    >
+      {t(effective)}
+    </span>
+  );
+}

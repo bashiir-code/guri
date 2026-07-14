@@ -2,10 +2,11 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { Home } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { StatusChip } from '@/components/status-chip';
+import { SolidStatusChip } from '@/components/status-chip';
 
 interface OwnerProperty {
   id: string;
@@ -25,21 +26,24 @@ interface OwnerProperty {
   } | null;
 }
 
-// §5 owner screen 3 — cards, read-only; the ONLY forward action is disabled
-// (owner intake is phase 10).
+// §5 owner screen 3, per the Guri Owner design — white cards, read-only;
+// the ONLY forward action is bringing another house to an agency.
 export default function OwnerPropertiesPage() {
   const t = useTranslations('owner');
+  const tt = useTranslations('listings.types');
+  const ts = useTranslations('listings.status');
   const { data: properties, isLoading } = useQuery<OwnerProperty[]>({
     queryKey: ['owner-properties'],
     queryFn: () => api('/owner/properties'),
   });
 
   return (
-    <main className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-bold text-forest lg:text-3xl">
-          {t('properties.title')}
-        </h1>
+    <main className="flex flex-col gap-[18px] md:gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="hidden animate-rise-in md:block">
+          <h1 className="font-display text-[28px] font-extrabold">{t('properties.title')}</h1>
+          <p className="mt-[5px] text-sm text-slate_brand">{t('properties.subtitle')}</p>
+        </div>
         <div className="text-right">
           <Button asChild>
             <Link href="/list-house">{t('properties.listAnother')}</Link>
@@ -48,52 +52,76 @@ export default function OwnerPropertiesPage() {
         </div>
       </div>
 
-      {isLoading && <p className="text-muted-foreground">…</p>}
+      {isLoading && (
+        <div className="grid gap-3.5 md:grid-cols-2 md:gap-5 lg:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-72 animate-pulse rounded-card bg-card" />
+          ))}
+        </div>
+      )}
       {!isLoading && !properties?.length && (
-        <div className="animate-rise-in rounded-card border bg-card p-10 text-center">
+        <div className="animate-rise-in rounded-card bg-card p-10 text-center shadow-[0_1px_3px_rgba(23,58,49,0.06)]">
           <p className="font-display text-lg font-bold text-forest">{t('properties.emptyTitle')}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t('properties.emptyBody')}</p>
         </div>
       )}
 
-      <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid gap-3.5 md:grid-cols-2 md:gap-5 lg:grid-cols-3">
         {properties?.map((p, i) => (
           <li key={p.id} className="animate-rise-in" style={{ animationDelay: `${i * 50}ms` }}>
             <Link
               href={`/owner/properties/${p.id}`}
-              className="block overflow-hidden rounded-card border bg-card transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              className="flex h-full flex-col overflow-hidden rounded-card bg-card shadow-[0_1px_3px_rgba(23,58,49,0.06)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
-              <div className="relative aspect-[4/3] w-full bg-muted">
-                {p.coverUrl && (
+              <div className="relative grid aspect-video w-full place-items-center bg-forest/[0.08]">
+                {p.coverUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.coverUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  <img
+                    src={p.coverUrl}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <Home className="h-9 w-9 text-forest/25" aria-hidden />
                 )}
-                <span className="absolute left-3 top-3">
-                  <StatusChip status={p.status} publishedAt={p.publishedAt} />
-                </span>
+                <SolidStatusChip
+                  status={p.status}
+                  publishedAt={p.publishedAt}
+                  className="absolute left-3 top-3 px-[11px] py-[5px] text-[11.5px]"
+                />
               </div>
-              <div className="space-y-1 p-4">
-                <p className="font-display text-lg font-bold text-forest">
-                  ${Math.round(p.rentUsd)}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {t('properties.perMonth')}
-                  </span>
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {p.district}
-                  {p.neighborhood ? ` · ${p.neighborhood}` : ''} · {p.bedrooms}{' '}
-                  {t('properties.bedsShort')}
-                </p>
-                {p.currentLease && (
-                  <div className="mt-2 rounded-xl bg-mist px-3 py-2 text-xs text-forest">
-                    <p className="font-semibold">{p.currentLease.tenantName ?? '—'}</p>
-                    <p className="text-muted-foreground">
-                      {new Date(p.currentLease.startDate).toLocaleDateString()} →{' '}
-                      {new Date(p.currentLease.endDate).toLocaleDateString()} ·{' '}
-                      {t('properties.daysToEnd', { days: p.currentLease.daysToEnd })}
+              <div className="flex flex-1 flex-col gap-3 p-[18px]">
+                <div>
+                  <p className="text-[15.5px] font-bold">
+                    {p.district}
+                    {p.neighborhood ? ` · ${p.neighborhood}` : ''}
+                  </p>
+                  <p className="mt-[3px] text-[13px] text-slate_brand">
+                    {tt(p.type)} · {p.bedrooms} {t('properties.bedsShort')}
+                  </p>
+                </div>
+                <div className="mt-auto flex items-center justify-between gap-3 border-t border-forest/[0.07] pt-3">
+                  <div className="min-w-0">
+                    <p className="text-[11.5px] text-slate_brand">
+                      {p.currentLease ? t('properties.tenant') : t('properties.statusLabel')}
                     </p>
+                    <p className="mt-0.5 truncate text-[13px] font-semibold">
+                      {p.currentLease ? (p.currentLease.tenantName ?? '—') : ts(p.publishedAt ? p.status : 'draft')}
+                    </p>
+                    {p.currentLease && (
+                      <p className="mt-0.5 text-[11.5px] text-slate_brand">
+                        {t('properties.daysToEnd', { days: p.currentLease.daysToEnd })}
+                      </p>
+                    )}
                   </div>
-                )}
+                  <p className="flex-none font-display text-xl font-extrabold">
+                    ${Math.round(p.rentUsd)}
+                    <span className="font-sans text-[11.5px] font-medium text-slate_brand">
+                      {t('properties.perMonth')}
+                    </span>
+                  </p>
+                </div>
               </div>
             </Link>
           </li>

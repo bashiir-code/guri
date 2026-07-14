@@ -95,6 +95,14 @@
       transform: none;
     }
   }
+  @keyframes drawerIn {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: none;
+    }
+  }
   .animate-fade-in {
     animation: fadeIn 0.2s ease both;
   }
@@ -106,5 +114,8 @@
   }
   .animate-rise-in {
     animation: riseIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-drawer-in {
+    animation: drawerIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 }

@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 interface Ledger {
   items: Array<{
@@ -25,12 +23,16 @@ interface OwnerProperty {
   neighborhood: string | null;
 }
 
-// §5 owner screen 5 — the income ledger. Strictly read-only.
+const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+// §5 owner screen 5 per the Guri Owner design — the income ledger. Strictly
+// read-only: every row is a payment the agency recorded off-platform.
 export default function OwnerIncomePage() {
   const t = useTranslations('owner');
   const tp = useTranslations('paymentTypes');
   const [listingId, setListingId] = useState('');
   const [month, setMonth] = useState('');
+  const thisMonth = monthKey(new Date());
 
   const { data: properties } = useQuery<OwnerProperty[]>({
     queryKey: ['owner-properties'],
@@ -47,33 +49,34 @@ export default function OwnerIncomePage() {
     },
   });
 
+  const total = data?.items.reduce((sum, p) => sum + p.amountUsd, 0) ?? 0;
+  const pillCls = (active: boolean) =>
+    cn(
+      'flex-none rounded-full border px-4 py-2 text-[13px] font-semibold transition-colors',
+      active
+        ? 'border-forest bg-forest text-mist'
+        : 'border-forest/15 bg-card text-forest hover:border-forest/40',
+    );
+
   return (
-    <main className="space-y-5">
-      <h1 className="font-display text-2xl font-bold text-forest lg:text-3xl">
-        {t('income.title')}
-      </h1>
-
-      {data && data.monthlyTotals.length > 0 && (
-        <div className="hs flex gap-3 overflow-x-auto pb-1">
-          {data.monthlyTotals.map((m) => (
-            <div
-              key={m.month}
-              className="animate-rise-in shrink-0 rounded-card border bg-card px-5 py-3"
-            >
-              <p className="font-display text-2xl font-extrabold text-forest">${m.totalUsd}</p>
-              <p className="text-xs text-muted-foreground">{m.month}</p>
-            </div>
-          ))}
+    <main className="flex flex-col gap-[18px] md:gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="hidden animate-rise-in md:block">
+          <h1 className="font-display text-[28px] font-extrabold">{t('income.title')}</h1>
+          <p className="mt-[5px] text-sm text-slate_brand">{t('income.subtitle')}</p>
         </div>
-      )}
-
-      <div className="grid max-w-xl grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="filter-property">{t('income.property')}</Label>
-          <Select
-            id="filter-property"
+        <div className="hs flex max-w-full items-center gap-2 overflow-x-auto">
+          <button onClick={() => setMonth('')} className={pillCls(month === '')}>
+            {t('income.filterAll')}
+          </button>
+          <button onClick={() => setMonth(thisMonth)} className={pillCls(month === thisMonth)}>
+            {t('income.filterThisMonth')}
+          </button>
+          <select
+            aria-label={t('income.property')}
             value={listingId}
             onChange={(e) => setListingId(e.target.value)}
+            className="h-[38px] max-w-[180px] flex-none appearance-none rounded-full border border-forest/15 bg-card px-4 text-[13px] font-semibold text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">{t('income.allProperties')}</option>
             {properties?.map((p) => (
@@ -82,57 +85,102 @@ export default function OwnerIncomePage() {
                 {p.neighborhood ? ` · ${p.neighborhood}` : ''}
               </option>
             ))}
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="filter-month">{t('income.month')}</Label>
-          <Input
-            id="filter-month"
+          </select>
+          <input
+            aria-label={t('income.month')}
             type="month"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
+            className="h-[38px] flex-none rounded-full border border-forest/15 bg-card px-4 text-[13px] font-semibold text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
       </div>
 
-      {isLoading && <p className="text-muted-foreground">…</p>}
+      {isLoading && (
+        <div className="h-64 animate-pulse rounded-card bg-card" />
+      )}
       {!isLoading && !data?.items.length && (
-        <div className="animate-rise-in rounded-card border bg-card p-10 text-center">
+        <div className="animate-rise-in rounded-card bg-card p-10 text-center shadow-[0_1px_3px_rgba(23,58,49,0.06)]">
           <p className="font-display text-lg font-bold text-forest">{t('income.emptyTitle')}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t('income.emptyBody')}</p>
         </div>
       )}
 
       {Boolean(data?.items.length) && (
-        <div className="animate-rise-in overflow-x-auto rounded-card border bg-card">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3">{t('income.date')}</th>
-                <th className="px-4 py-3">{t('income.propertyCol')}</th>
-                <th className="px-4 py-3">{t('income.type')}</th>
-                <th className="px-4 py-3 text-right">{t('income.amount')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data!.items.map((p) => (
-                <tr key={p.id} className="border-b last:border-0">
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(p.paidOn).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 text-forest">
+        <>
+          {/* md and up: the design's ledger table in one white card */}
+          <div className="animate-rise-in hidden overflow-hidden rounded-card bg-card shadow-[0_1px_3px_rgba(23,58,49,0.06)] md:block">
+            <div className="grid grid-cols-[1.1fr_1.7fr_1.1fr_0.8fr] gap-4 border-b border-forest/[0.08] bg-forest/[0.02] px-6 py-3.5">
+              <p className="text-xs font-bold text-slate_brand">{t('income.date')}</p>
+              <p className="text-xs font-bold text-slate_brand">{t('income.propertyCol')}</p>
+              <p className="text-xs font-bold text-slate_brand">{t('income.type')}</p>
+              <p className="text-right text-xs font-bold text-slate_brand">{t('income.amount')}</p>
+            </div>
+            {data!.items.map((p) => (
+              <div
+                key={p.id}
+                className="grid grid-cols-[1.1fr_1.7fr_1.1fr_0.8fr] items-center gap-4 border-b border-forest/[0.05] px-6 py-3.5 last:border-0"
+              >
+                <p className="text-[13px] text-slate_brand">
+                  {new Date(p.paidOn).toLocaleDateString()}
+                </p>
+                <p className="truncate text-sm font-semibold">
+                  {p.listing.district}
+                  {p.listing.neighborhood ? ` · ${p.listing.neighborhood}` : ''}
+                </p>
+                <div>
+                  <span className="whitespace-nowrap rounded-full bg-lime/40 px-[11px] py-[5px] text-[11.5px] font-semibold text-forest">
+                    {tp(p.type)}
+                  </span>
+                </div>
+                <p className="text-right font-display text-base font-extrabold">
+                  ${p.amountUsd.toLocaleString('en-US')}
+                </p>
+              </div>
+            ))}
+            <div className="flex items-center justify-between bg-forest/[0.02] px-6 py-4">
+              <p className="text-[13px] font-semibold text-slate_brand">
+                {t('income.totalReceived')}
+              </p>
+              <p className="font-display text-[19px] font-extrabold">
+                ${total.toLocaleString('en-US')}
+              </p>
+            </div>
+          </div>
+
+          {/* Phone: forest total banner + payment cards */}
+          <div className="flex flex-col gap-3 md:hidden">
+            <div className="animate-rise-in flex items-center justify-between rounded-card bg-forest px-5 py-[18px]">
+              <p className="text-[13px] font-semibold text-mist/70">{t('income.totalReceived')}</p>
+              <p className="font-display text-xl font-extrabold text-lime">
+                ${total.toLocaleString('en-US')}
+              </p>
+            </div>
+            {data!.items.map((p, i) => (
+              <div
+                key={p.id}
+                className="animate-rise-in flex items-center gap-3.5 rounded-card bg-card px-[18px] py-4 shadow-[0_1px_3px_rgba(23,58,49,0.06)]"
+                style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14.5px] font-bold">
                     {p.listing.district}
                     {p.listing.neighborhood ? ` · ${p.listing.neighborhood}` : ''}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{tp(p.type)}</td>
-                  <td className="px-4 py-3 text-right font-display font-bold text-forest">
-                    ${p.amountUsd}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </p>
+                  <p className="mt-[3px] text-[12.5px] text-slate_brand">
+                    {new Date(p.paidOn).toLocaleDateString()} · {tp(p.type)}
+                  </p>
+                  <span className="mt-[7px] inline-block rounded-full bg-lime/40 px-2.5 py-1 text-[11px] font-semibold text-forest">
+                    {t('income.received')}
+                  </span>
+                </div>
+                <p className="flex-none font-display text-lg font-extrabold">
+                  ${p.amountUsd.toLocaleString('en-US')}
+                </p>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </main>
   );

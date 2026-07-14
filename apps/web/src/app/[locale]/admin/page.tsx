@@ -1,178 +1,266 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
-import { createAgencySchema, MOGADISHU_DISTRICTS, type CreateAgencyInput } from '@guri/shared';
+import { useQuery } from '@tanstack/react-query';
+import { useLocale, useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatLongDate, formatMonthShort } from '@/lib/so-date';
 import { cn } from '@/lib/utils';
 
-interface AgencyRow {
-  id: string;
-  name: string;
-  phone: string;
-  districts: string[];
-  status: 'pending' | 'active' | 'suspended';
-  _count: { members: number; listings: number };
+interface Overview {
+  activeAgencies: number;
+  pendingAgencies: number;
+  suspendedAgencies: number;
+  activeListings: number;
+  listingsThisMonth: number;
+  activeTenancies: number;
+  rentThisMonthUsd: number;
+  tenanciesPerMonth: Array<{ month: string; count: number }>;
+  listingsByDistrict: Array<{ district: string; count: number }>;
+}
+interface Metrics {
+  overview: Overview;
+  agencies: Array<{
+    agencyId: string;
+    name: string;
+    status: string;
+    listingsByStatus: { draft: number; available: number; reserved: number; rented: number };
+    funnel: { requested: number; viewed: number; closed: number };
+    medianDaysToRent: number | null;
+  }>;
 }
 
-// Status chips from the reference table: neutral pill + colored dot.
-const statusChip: Record<string, string> = {
-  active: 'bg-muted text-forest',
-  pending: 'bg-amber_reserved/25 text-forest',
-  suspended: 'bg-destructive/10 text-destructive',
-};
-const statusDot: Record<string, string> = {
-  active: 'bg-emerald-500',
-  pending: 'bg-amber_reserved',
-  suspended: 'bg-destructive',
-};
-
-// §5 Agencies: create + approve/suspend. Admin never edits listings or deals.
-export default function AdminAgenciesPage() {
+// §5/§13 Metrics overview — the console landing screen from the Platform
+// Admin design: KPI cards, new-tenancies bar chart (forest hero, lime last
+// bar), listings by district, pending approvals. Per-agency funnels follow.
+export default function AdminOverviewPage() {
   const t = useTranslations('admin');
-  const qc = useQueryClient();
+  const locale = useLocale();
 
-  const { data: agencies } = useQuery<AgencyRow[]>({
-    queryKey: ['agencies'],
-    queryFn: () => api('/admin/agencies'),
+  const { data, isLoading } = useQuery<Metrics>({
+    queryKey: ['admin-metrics'],
+    queryFn: () => api('/admin/metrics'),
   });
 
-  const form = useForm<CreateAgencyInput>({
-    resolver: zodResolver(createAgencySchema),
-    defaultValues: { districts: [] },
-  });
-  const create = useMutation({
-    mutationFn: (input: CreateAgencyInput) => api('/admin/agencies', { body: input }),
-    onSuccess: () => {
-      form.reset({ name: '', phone: '', districts: [], adminEmail: '', adminName: '', adminPhone: '' });
-      void qc.invalidateQueries({ queryKey: ['agencies'] });
+  if (isLoading || !data) return <p className="text-muted-foreground">…</p>;
+  const o = data.overview;
+
+  const today = formatLongDate(new Date(), locale);
+
+  const kpis = [
+    {
+      label: t('overview.kpiAgencies'),
+      value: String(o.activeAgencies),
+      delta: t('overview.kpiAgenciesDelta', { count: o.pendingAgencies }),
+      deltaClass: o.pendingAgencies > 0 ? 'text-[#8A5A10]' : 'text-slate_brand',
     },
-  });
-  const setStatus = useMutation({
-    mutationFn: (v: { id: string; status: 'active' | 'suspended' }) =>
-      api(`/admin/agencies/${v.id}`, { method: 'PATCH', body: { status: v.status } }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['agencies'] }),
-  });
+    {
+      label: t('overview.kpiListings'),
+      value: String(o.activeListings),
+      delta: t('overview.deltaThisMonth', { count: o.listingsThisMonth }),
+      deltaClass: 'text-forest',
+    },
+    {
+      label: t('overview.kpiTenancies'),
+      value: String(o.activeTenancies),
+      delta: t('overview.deltaThisMonth', {
+        count: o.tenanciesPerMonth[o.tenanciesPerMonth.length - 1]?.count ?? 0,
+      }),
+      deltaClass: 'text-forest',
+    },
+    {
+      label: t('overview.kpiRent'),
+      value: `$${o.rentThisMonthUsd.toLocaleString('en-US')}`,
+      delta: t('overview.thisMonth'),
+      deltaClass: 'text-slate_brand',
+    },
+  ];
+
+  const maxBar = Math.max(1, ...o.tenanciesPerMonth.map((m) => m.count));
+  const monthLabel = (key: string) => {
+    const [y, m] = key.split('-').map(Number);
+    return formatMonthShort(new Date(y, m - 1, 1), locale);
+  };
+
+  // Top 5 districts + everything else rolled into one row, like the design.
+  const top = o.listingsByDistrict.slice(0, 5);
+  const otherCount = o.listingsByDistrict.slice(5).reduce((sum, d) => sum + d.count, 0);
+  const districts = [
+    ...top.map((d) => ({ name: d.district, count: d.count })),
+    ...(otherCount > 0 ? [{ name: t('overview.otherDistricts'), count: otherCount }] : []),
+  ];
+  const maxDistrict = Math.max(1, ...districts.map((d) => d.count));
 
   return (
-    <main className="grid w-full gap-6 md:grid-cols-[380px_1fr]">
-      <Card className="h-fit">
-        <CardHeader>
-          <CardTitle className="text-lg">{t('createAgency')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={form.handleSubmit((v) => create.mutate(v))}>
-            <div className="space-y-2">
-              <Label htmlFor="agency-name">{t('name')}</Label>
-              <Input id="agency-name" {...form.register('name')} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="agency-phone">{t('phone')}</Label>
-              <Input id="agency-phone" type="tel" {...form.register('phone')} />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('districts')}</Label>
-              <div className="grid max-h-44 grid-cols-2 gap-1 overflow-y-auto rounded-xl border p-3">
-                {MOGADISHU_DISTRICTS.map((d) => (
-                  <label key={d} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      value={d}
-                      className="h-4 w-4 accent-forest"
-                      {...form.register('districts')}
-                    />
-                    {d}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="admin-email">{t('adminEmail')}</Label>
-              <Input id="admin-email" type="email" placeholder="admin@example.com" {...form.register('adminEmail')} />
-              <p className="text-xs text-muted-foreground">{t('adminEmailHint')}</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="admin-name">{t('adminName')}</Label>
-              <Input id="admin-name" {...form.register('adminName')} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="admin-phone">{t('adminPhone')}</Label>
-              <Input id="admin-phone" type="tel" placeholder="+2526xxxxxxxx" {...form.register('adminPhone')} />
-            </div>
-            {Object.keys(form.formState.errors).length > 0 && (
-              <p className="text-sm text-destructive">{t('invalid')}</p>
-            )}
-            {create.isError && <p className="text-sm text-destructive">{create.error.message}</p>}
-            {create.isSuccess && <p className="text-sm text-forest">{t('created')}</p>}
-            <Button type="submit" className="w-full" disabled={create.isPending}>
-              {t('createButton')}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <main className="flex flex-col gap-5 md:gap-6">
+      <div className="animate-rise-in hidden md:block">
+        <h1 className="font-display text-[28px] font-extrabold text-forest">
+          {t('overview.title')}
+        </h1>
+        <p className="mt-1 text-sm text-slate_brand">
+          {t('overview.subtitle')} · {today}
+        </p>
+      </div>
 
-      <section>
-        <h1 className="mb-4 font-display text-2xl font-bold text-forest">{t('agencies')}</h1>
-        {!agencies?.length && <p className="text-muted-foreground">{t('noAgencies')}</p>}
-        <ul className="space-y-2">
-          {agencies?.map((a) => (
-            <li key={a.id} className="rounded-card border bg-card px-4 py-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-display font-bold text-forest">{a.name}</p>
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold',
-                    statusChip[a.status],
-                  )}
-                >
-                  <span className={cn('h-2 w-2 rounded-full', statusDot[a.status])} aria-hidden />
-                  {t(`status.${a.status}`)}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {a.phone} · {a.districts.join(', ')}
-              </p>
-              <div className="mt-2 flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {t('members', { count: a._count.members })} ·{' '}
-                  {t('listings', { count: a._count.listings })}
-                </p>
-                <div className="flex gap-2">
-                  {a.status !== 'active' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={setStatus.isPending}
-                      onClick={() => setStatus.mutate({ id: a.id, status: 'active' })}
-                    >
-                      {/* §17: pending → Approve; suspended → Reactivate. Both
-                          set status:active; suspension is reversible by design. */}
-                      {a.status === 'suspended' ? t('reactivate') : t('approve')}
-                    </Button>
-                  )}
-                  {a.status !== 'suspended' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-destructive text-destructive hover:bg-destructive/5"
-                      disabled={setStatus.isPending}
-                      onClick={() => setStatus.mutate({ id: a.id, status: 'suspended' })}
-                    >
-                      {t('suspend')}
-                    </Button>
-                  )}
+      {/* KPI cards — 2-up on the phone, 4-up on tablet/desktop. */}
+      <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4 md:gap-5">
+        {kpis.map((k) => (
+          <div
+            key={k.label}
+            className="animate-rise-in flex flex-col gap-1.5 rounded-card bg-card p-5 shadow-sm"
+          >
+            <p className="text-[13px] font-semibold text-slate_brand">{k.label}</p>
+            <p className="font-display text-3xl font-extrabold text-forest">{k.value}</p>
+            <p className={cn('text-[12.5px]', k.deltaClass)}>{k.delta}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid items-start gap-3.5 md:gap-5 lg:grid-cols-[1.5fr_1fr]">
+        {/* Forest hero — new tenancies per month, last bar lime. */}
+        <div className="animate-rise-in flex flex-col gap-4 rounded-[24px] bg-forest p-5 md:p-7">
+          <h2 className="font-display text-[17px] font-bold text-mist">
+            {t('overview.chartTitle')}
+          </h2>
+          <div className="flex h-[150px] items-end gap-1.5 md:gap-3">
+            {o.tenanciesPerMonth.map((m, i) => {
+              const last = i === o.tenanciesPerMonth.length - 1;
+              return (
+                <div key={m.month} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+                  <span
+                    className={cn(
+                      'text-[11.5px] font-bold',
+                      last ? 'text-lime' : 'text-mist/60',
+                    )}
+                  >
+                    {m.count}
+                  </span>
+                  <div
+                    className={cn(
+                      'w-full max-w-12 rounded-t-lg rounded-b-[3px]',
+                      last ? 'bg-lime' : 'bg-mist/[0.22]',
+                    )}
+                    style={{ height: `${Math.max(4, Math.round((m.count / maxBar) * 100))}%` }}
+                  />
+                  <span className="text-[11px] text-mist/55">{monthLabel(m.month)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3.5 md:gap-5">
+          {/* Listings by district */}
+          <div className="animate-rise-in flex flex-col gap-3.5 rounded-card bg-card p-6 shadow-sm">
+            <h2 className="font-display text-base font-bold text-forest">
+              {t('overview.districtsTitle')}
+            </h2>
+            {districts.length === 0 && (
+              <p className="text-sm text-muted-foreground">{t('overview.noDistricts')}</p>
+            )}
+            {districts.map((d) => (
+              <div key={d.name} className="flex flex-col gap-1.5">
+                <div className="flex justify-between text-[13px]">
+                  <span className="font-semibold text-forest">{d.name}</span>
+                  <span className="text-slate_brand">{d.count}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-forest/[0.07]">
+                  <div
+                    className="h-full rounded-full bg-forest transition-[width] duration-500 motion-reduce:transition-none"
+                    style={{ width: `${Math.round((d.count / maxDistrict) * 100)}%` }}
+                  />
                 </div>
               </div>
-            </li>
+            ))}
+          </div>
+
+          {/* Pending approvals — the screen's one Lime action. */}
+          <div className="animate-rise-in flex flex-col gap-3 rounded-card bg-card p-6 shadow-sm">
+            <h2 className="font-display text-base font-bold text-forest">
+              {t('overview.pendingTitle')}
+            </h2>
+            <div className="flex items-center gap-3 rounded-[14px] bg-amber_reserved/[0.18] px-3.5 py-3">
+              <p className="font-display text-2xl font-extrabold text-forest">
+                {o.pendingAgencies}
+              </p>
+              <p className="text-[13px] leading-snug text-slate_brand">
+                {t('overview.pendingBody', { count: o.pendingAgencies })}
+              </p>
+            </div>
+            <Link
+              href="/admin/agencies"
+              className="grid h-11 place-items-center rounded-full bg-lime text-sm font-bold text-forest transition-transform duration-150 hover:brightness-95 active:scale-[0.98] motion-reduce:transition-none"
+            >
+              {t('overview.pendingCta')}
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Per-agency §13 detail: funnel + median days-to-rent. */}
+      <section className="mt-1">
+        <h2 className="mb-3 font-display text-lg font-bold text-forest">
+          {t('overview.funnelsTitle')}
+        </h2>
+        {!data.agencies.length && (
+          <p className="text-muted-foreground">{t('metricsView.empty')}</p>
+        )}
+        <div className="grid gap-4 md:grid-cols-2">
+          {data.agencies.map((a) => (
+            <AgencyFunnelCard key={a.agencyId} agency={a} />
           ))}
-        </ul>
+        </div>
       </section>
     </main>
+  );
+}
+
+function AgencyFunnelCard({ agency: a }: { agency: Metrics['agencies'][number] }) {
+  const t = useTranslations('admin.metricsView');
+  const max = a.funnel.requested || 1;
+  const steps = [
+    { key: 'requested', value: a.funnel.requested },
+    { key: 'viewed', value: a.funnel.viewed },
+    { key: 'closed', value: a.funnel.closed },
+  ] as const;
+  return (
+    <div className="animate-rise-in space-y-4 rounded-card bg-card p-5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <p className="font-display text-lg font-bold text-forest">{a.name}</p>
+        <span className="text-xs text-muted-foreground">{t(`status.${a.status}`)}</span>
+      </div>
+      <div className="space-y-3">
+        {steps.map((s) => (
+          <div key={s.key}>
+            <div className="mb-1 flex items-baseline justify-between">
+              <span className="text-sm text-slate_brand">{t(`funnel.${s.key}`)}</span>
+              <span className="font-display text-lg font-bold text-forest">{s.value}</span>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-forest transition-[width] duration-500 motion-reduce:transition-none"
+                style={{ width: `${max > 0 ? Math.round((s.value / max) * 100) : 0}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl bg-forest px-5 py-4">
+        <p className="text-xs text-mist/80">{t('medianDaysToRent')}</p>
+        <p className="font-display text-4xl font-extrabold text-lime">
+          {a.medianDaysToRent === null ? '—' : a.medianDaysToRent}
+        </p>
+        {a.medianDaysToRent !== null && (
+          <p className="text-xs text-mist/70">{t('days', { days: a.medianDaysToRent })}</p>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        {(['available', 'reserved', 'rented', 'draft'] as const).map((k) => (
+          <span key={k}>
+            <strong className="text-forest">{a.listingsByStatus[k]}</strong> {t(`listing.${k}`)}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }

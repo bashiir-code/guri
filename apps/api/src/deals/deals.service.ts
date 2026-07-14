@@ -21,7 +21,7 @@ export class DealsService {
     const deals = await this.prisma.deal.findMany({
       where: { customerId },
       orderBy: { createdAt: 'desc' },
-      include: { listing: true },
+      include: { listing: { include: { agency: { select: { name: true, phone: true } } } } },
     });
     return Promise.all(
       deals.map(async (d) => ({
@@ -29,6 +29,8 @@ export class DealsService {
         state: d.state,
         viewingAt: d.viewingAt,
         createdAt: d.createdAt,
+        // Customers coordinate with the accountable agency, never the owner (§2).
+        agency: { name: d.listing.agency.name, phone: d.listing.agency.phone },
         listing: {
           id: d.listing.id,
           district: d.listing.district,
@@ -166,15 +168,39 @@ export class DealsService {
   }
 
   // §5 agency dashboard: today's viewings, unanswered requests, deals waiting
-  // on documents, listings by status.
+  // on documents, listings by status — plus the Agency Console design's
+  // stat cards (active listings / new leads / viewings this week / rent this
+  // month) and a recent-leads list. All read-only aggregates; no state moves.
   async dashboard(ctx: AgencyContext) {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(startOfDay);
     endOfDay.setDate(endOfDay.getDate() + 1);
+    // Week starts Monday; end is the following Monday.
+    const startOfWeek = new Date(startOfDay);
+    startOfWeek.setDate(startOfDay.getDate() - ((startOfDay.getDay() + 6) % 7));
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    const monthStart = new Date(startOfDay.getFullYear(), startOfDay.getMonth(), 1);
     const agencyListing = { listing: { agencyId: ctx.agencyId } };
+    // The active pipeline (§4): a lead is any deal not yet closed or dropped.
+    const activePipeline: DealState[] = [
+      'requested',
+      'viewing_scheduled',
+      'awaiting_docs',
+      'docs_in_review',
+      'approved',
+    ];
 
-    const [todaysViewings, unansweredRequests, awaitingDocs, listings] = await Promise.all([
+    const [
+      todaysViewings,
+      unansweredRequests,
+      awaitingDocs,
+      listings,
+      viewingsThisWeek,
+      rentThisMonth,
+      recentLeads,
+    ] = await Promise.all([
       this.prisma.deal.findMany({
         where: {
           ...agencyListing,
@@ -192,6 +218,26 @@ export class DealsService {
       this.prisma.listing.findMany({
         where: { agencyId: ctx.agencyId },
         select: { status: true, publishedAt: true },
+      }),
+      this.prisma.deal.count({
+        where: {
+          ...agencyListing,
+          state: 'viewing_scheduled',
+          viewingAt: { gte: startOfWeek, lt: endOfWeek },
+        },
+      }),
+      this.prisma.payment.aggregate({
+        where: { paidOn: { gte: monthStart }, lease: agencyListing },
+        _sum: { amountUsd: true },
+      }),
+      this.prisma.deal.findMany({
+        where: { ...agencyListing, state: { in: activePipeline } },
+        orderBy: { updatedAt: 'desc' },
+        take: 6,
+        include: {
+          customer: { select: { name: true, phone: true } },
+          listing: { select: { id: true, district: true, neighborhood: true } },
+        },
       }),
     ]);
 
@@ -211,6 +257,20 @@ export class DealsService {
       unansweredRequests,
       awaitingDocs,
       listingsByStatus: byStatus,
+      stats: {
+        activeListings: byStatus.available + byStatus.reserved,
+        newLeads: unansweredRequests,
+        viewingsThisWeek,
+        rentThisMonthUsd: Math.round(Number(rentThisMonth._sum.amountUsd ?? 0)),
+      },
+      newLeads: recentLeads.map((d) => ({
+        dealId: d.id,
+        state: d.state,
+        name: d.customer.name ?? d.customer.phone ?? 'Guest',
+        phone: d.customer.phone,
+        listing: d.listing,
+        when: d.updatedAt,
+      })),
     };
   }
 

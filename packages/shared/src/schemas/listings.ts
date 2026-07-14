@@ -8,6 +8,7 @@ export const listingFieldsSchema = z.object({
   type: z.enum(LISTING_TYPES),
   bedrooms: z.coerce.number().int().min(0).max(30),
   bathrooms: z.coerce.number().int().min(0).max(30),
+  areaSqm: z.coerce.number().int().positive().max(100_000).optional(),
   rentUsd: z.coerce.number().positive().max(1_000_000),
   depositUsd: z.coerce.number().min(0).max(1_000_000),
   descriptionSo: z.string().trim().min(1).max(4000),

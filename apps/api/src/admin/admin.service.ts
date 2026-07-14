@@ -47,11 +47,52 @@ export class AdminService {
     return agency;
   }
 
+  // Read-only listing for the console table. Besides the raw counts, the
+  // design's table shows live tenancies and rent recorded this month per
+  // agency — aggregates only, nothing here mutates state.
   async listAgencies() {
-    return this.prisma.agency.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { members: true, listings: true } } },
+    const monthStart = startOfMonth(new Date());
+    const [agencies, tenancies, rent] = await Promise.all([
+      this.prisma.agency.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: { _count: { select: { members: true, listings: true } } },
+      }),
+      this.prisma.lease.groupBy({
+        by: ['listingId'],
+        where: { status: { in: ['active', 'ending_soon'] } },
+        _count: { _all: true },
+      }),
+      this.prisma.payment.findMany({
+        where: { paidOn: { gte: monthStart } },
+        select: { amountUsd: true, lease: { select: { listing: { select: { agencyId: true } } } } },
+      }),
+    ]);
+
+    // listingId → agencyId map for the tenancy rollup
+    const listingAgency = new Map<string, string>();
+    const listings = await this.prisma.listing.findMany({
+      where: { id: { in: tenancies.map((t) => t.listingId) } },
+      select: { id: true, agencyId: true },
     });
+    for (const l of listings) listingAgency.set(l.id, l.agencyId);
+
+    const tenanciesByAgency = new Map<string, number>();
+    for (const t of tenancies) {
+      const agencyId = listingAgency.get(t.listingId);
+      if (!agencyId) continue;
+      tenanciesByAgency.set(agencyId, (tenanciesByAgency.get(agencyId) ?? 0) + t._count._all);
+    }
+    const rentByAgency = new Map<string, number>();
+    for (const p of rent) {
+      const agencyId = p.lease.listing.agencyId;
+      rentByAgency.set(agencyId, (rentByAgency.get(agencyId) ?? 0) + Number(p.amountUsd));
+    }
+
+    return agencies.map((a) => ({
+      ...a,
+      activeTenancies: tenanciesByAgency.get(a.id) ?? 0,
+      rentThisMonthUsd: Math.round(rentByAgency.get(a.id) ?? 0),
+    }));
   }
 
   async patchAgency(actorId: string, id: string, input: PatchAgencyInput) {
@@ -136,8 +177,70 @@ export class AdminService {
     };
   }
 
-  // §5/§13 Metrics — listings by status, the requested→viewed→closed funnel,
-  // and median days-to-rent, per agency.
+  // Platform-wide aggregates for the console's overview screen (§5/§13):
+  // KPI counts, new tenancies per month, and published listings by district.
+  // Read-only — computed on the fly, nothing persisted.
+  private async overview() {
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const chartStart = startOfMonth(new Date(now.getFullYear(), now.getMonth() - 6, 1));
+
+    const [byStatus, activeListings, listingsThisMonth, activeTenancies, rentAgg, recentLeases, published] =
+      await Promise.all([
+        this.prisma.agency.groupBy({ by: ['status'], _count: { _all: true } }),
+        this.prisma.listing.count({
+          where: { publishedAt: { not: null }, agency: { status: 'active' } },
+        }),
+        this.prisma.listing.count({ where: { publishedAt: { gte: monthStart } } }),
+        this.prisma.lease.count({ where: { status: { in: ['active', 'ending_soon'] } } }),
+        this.prisma.payment.aggregate({
+          where: { paidOn: { gte: monthStart } },
+          _sum: { amountUsd: true },
+        }),
+        this.prisma.lease.findMany({
+          where: { createdAt: { gte: chartStart } },
+          select: { createdAt: true },
+        }),
+        this.prisma.listing.groupBy({
+          by: ['district'],
+          where: { publishedAt: { not: null } },
+          _count: { _all: true },
+          orderBy: { _count: { district: 'desc' } },
+        }),
+      ]);
+
+    const statusCount = (s: string) => byStatus.find((b) => b.status === s)?._count._all ?? 0;
+
+    // last 7 calendar months, oldest first
+    const months: Array<{ month: string; count: number }> = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months.push({ month: key, count: 0 });
+    }
+    for (const lease of recentLeases) {
+      const key = `${lease.createdAt.getFullYear()}-${String(lease.createdAt.getMonth() + 1).padStart(2, '0')}`;
+      const slot = months.find((m) => m.month === key);
+      if (slot) slot.count += 1;
+    }
+
+    const districts = published.map((d) => ({ district: d.district, count: d._count._all }));
+
+    return {
+      activeAgencies: statusCount('active'),
+      pendingAgencies: statusCount('pending'),
+      suspendedAgencies: statusCount('suspended'),
+      activeListings,
+      listingsThisMonth,
+      activeTenancies,
+      rentThisMonthUsd: Math.round(Number(rentAgg._sum.amountUsd ?? 0)),
+      tenanciesPerMonth: months,
+      listingsByDistrict: districts,
+    };
+  }
+
+  // §5/§13 Metrics — the platform overview plus listings by status, the
+  // requested→viewed→closed funnel, and median days-to-rent, per agency.
   async metrics() {
     const agencies = await this.prisma.agency.findMany({ orderBy: { name: 'asc' } });
     const rows = [];
@@ -190,8 +293,12 @@ export class AdminService {
         medianDaysToRent: median(daysToRent),
       });
     }
-    return { agencies: rows };
+    return { overview: await this.overview(), agencies: rows };
   }
+}
+
+function startOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
 function median(values: number[]): number | null {

@@ -231,6 +231,9 @@ model Listing {
   type          ListingType
   bedrooms      Int
   bathrooms     Int
+  // Floor area in m² (SPEC §5 detail stat grid). Optional — older listings and
+  // intakes may not have it.
+  areaSqm       Int?          @map("area_sqm")
   rentUsd       Decimal       @map("rent_usd") @db.Decimal(10, 2)
   depositUsd    Decimal       @map("deposit_usd") @db.Decimal(10, 2)
   descriptionSo String        @map("description_so")

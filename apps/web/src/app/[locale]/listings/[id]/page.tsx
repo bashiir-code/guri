@@ -4,7 +4,7 @@ import { use, useState } from 'react';
 import { useAuthStatus } from '@/hooks/use-auth-status';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
-import { ChevronLeft } from 'lucide-react';
+import { BadgeCheck, ChevronLeft, MessageCircle, Phone } from 'lucide-react';
 import { Link, useRouter } from '@/i18n/navigation';
 import { api, ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -20,24 +20,26 @@ interface PublicListing {
   type: string;
   bedrooms: number;
   bathrooms: number;
+  areaSqm: number | null;
   rentUsd: number;
   depositUsd: number;
   descriptionSo: string;
   descriptionEn: string;
   status: 'available' | 'reserved' | 'rented';
   photos: string[];
-  agency: { name: string; phone: string; waUrl: string };
+  agency: { name: string; phone: string; waUrl: string; listingCount: number };
 }
 
 type RequestState = 'idle' | 'confirm' | 'success' | 'signin' | 'duplicate' | 'error';
 
-// Phone: snap-scroll gallery + sticky bottom CTA bar.
-// Laptop: two columns — gallery + description left, sticky action rail right
-// (price, facts, agency, request button); the bottom bar disappears.
+// Phone: snap-scroll gallery, stacked facts + 4-up stat grid, agency card,
+// sticky bottom CTA (SPEC §5 detail).
+// Laptop: two columns — gallery + description left, sticky action rail right.
 export default function PublicListingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations('listingDetail');
   const tt = useTranslations('listings.types');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
   const { isSignedIn } = useAuthStatus();
@@ -63,17 +65,74 @@ export default function PublicListingPage({ params }: { params: Promise<{ id: st
 
   const description = locale === 'so' ? listing.descriptionSo : listing.descriptionEn;
   const openRequest = () => setSheet(isSignedIn ? 'confirm' : 'signin');
+  const title = t('title', { type: tt(listing.type), beds: listing.bedrooms });
+  const location = `${listing.neighborhood ? `${listing.neighborhood}, ` : ''}${listing.district}`;
+  const agencyInitial = listing.agency.name.charAt(0).toUpperCase();
+
+  const priceBlock = (
+    <div className="flex items-start justify-between gap-3">
+      <p className="font-display text-3xl font-extrabold text-forest">
+        ${Math.round(listing.rentUsd)}
+        <span className="text-base font-normal text-muted-foreground">{t('perMonth')}</span>
+      </p>
+      <StatusChip status={listing.status} publishedAt={new Date()} />
+    </div>
+  );
+
+  const heading = (
+    <div>
+      <h1 className="font-display text-2xl font-extrabold text-forest">{title}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{location}</p>
+    </div>
+  );
+
+  // 4-up stat grid (Beds / Baths / m² / Type), bilingual stacked labels.
+  const stats = [
+    { value: listing.bedrooms, label: t('statBeds') },
+    { value: listing.bathrooms, label: t('statBaths') },
+    { value: listing.areaSqm != null ? `${listing.areaSqm} m²` : '—', label: t('statArea') },
+    { value: tt(listing.type), label: t('statType') },
+  ];
+  const statGrid = (
+    <div className="grid grid-cols-4 rounded-card border bg-card">
+      {stats.map((s, i) => (
+        <div
+          key={s.label}
+          className={`px-2 py-4 text-center ${i > 0 ? 'border-l border-border' : ''}`}
+        >
+          <p className="font-display text-lg font-extrabold text-forest">{s.value}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
+        </div>
+      ))}
+    </div>
+  );
 
   const agencyCard = (
     <div className="rounded-card border bg-card p-4">
-      <p className="text-sm text-muted-foreground">{t('managedBy')}</p>
-      <p className="mb-3 font-semibold text-forest">{listing.agency.name}</p>
-      <div className="flex gap-3">
-        <Button asChild variant="outline" className="flex-1">
-          <a href={`tel:${listing.agency.phone}`}>{t('call')}</a>
+      <div className="flex items-center gap-3">
+        <span className="grid h-12 w-12 flex-none place-items-center rounded-xl bg-forest font-display text-lg font-extrabold text-lime">
+          {agencyInitial}
+        </span>
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 font-semibold text-forest">
+            <span className="truncate">{listing.agency.name}</span>
+            <BadgeCheck className="h-4 w-4 flex-none text-forest" aria-hidden />
+          </p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {t('homesCount', { count: listing.agency.listingCount })} · {tc('verifiedAgency')}
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2.5">
+        <Button asChild variant="outline" className="gap-2">
+          <a href={`tel:${listing.agency.phone}`}>
+            <Phone className="h-4 w-4" aria-hidden />
+            {t('call')}
+          </a>
         </Button>
-        <Button asChild variant="outline" className="flex-1">
+        <Button asChild className="gap-2">
           <a href={listing.agency.waUrl} target="_blank" rel="noopener noreferrer">
+            <MessageCircle className="h-4 w-4" aria-hidden />
             WhatsApp
           </a>
         </Button>
@@ -83,7 +142,7 @@ export default function PublicListingPage({ params }: { params: Promise<{ id: st
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[480px] pb-28 md:max-w-3xl lg:max-w-6xl lg:px-6 lg:pb-10 lg:pt-4">
-      {/* Phone/tablet: floating back bar over the full-bleed gallery (design). */}
+      {/* Phone/tablet: floating back bar over the full-bleed gallery. */}
       <div className="flex items-center justify-between px-4 py-3 lg:hidden">
         <button
           onClick={() => router.back()}
@@ -132,30 +191,19 @@ export default function PublicListingPage({ params }: { params: Promise<{ id: st
             )}
           </div>
 
-          {/* Phone/tablet facts (the laptop rail repeats these). */}
-          <div className="mt-4 px-4 lg:hidden">
-            <div className="flex items-center justify-between">
-              <p className="font-display text-3xl font-extrabold text-forest">
-                ${Math.round(listing.rentUsd)}
-                <span className="text-base font-normal text-muted-foreground">{t('perMonth')}</span>
-              </p>
-              <StatusChip status={listing.status} publishedAt={new Date()} />
-            </div>
-            <p className="mt-1 text-slate_brand">
-              {listing.bedrooms} {t('beds')} · {listing.bathrooms} {t('baths')} · {tt(listing.type)}
-            </p>
-            <p className="text-muted-foreground">
-              {listing.district}
-              {listing.neighborhood ? ` · ${listing.neighborhood}` : ''}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t('deposit')}: ${Math.round(listing.depositUsd)}
-            </p>
+          {/* Phone/tablet facts: price, title, stat grid (the rail repeats price). */}
+          <div className="mt-4 space-y-4 px-4 lg:hidden">
+            {priceBlock}
+            {heading}
+            {statGrid}
           </div>
 
-          <p className="mt-4 whitespace-pre-line px-4 leading-relaxed text-foreground lg:mt-6 lg:px-0 lg:text-lg">
-            {description}
-          </p>
+          <div className="mt-6 px-4 lg:px-0">
+            <h2 className="font-display text-lg font-bold text-forest">{t('aboutTitle')}</h2>
+            <p className="mt-2 whitespace-pre-line leading-relaxed text-foreground lg:text-lg">
+              {description}
+            </p>
+          </div>
 
           <section className="mt-6 px-4 lg:hidden">{agencyCard}</section>
         </div>
@@ -166,25 +214,9 @@ export default function PublicListingPage({ params }: { params: Promise<{ id: st
           style={{ animationDelay: '100ms' }}
         >
           <div className="space-y-4 rounded-card border bg-card p-6">
-            <div className="flex items-center justify-between">
-              <p className="font-display text-3xl font-extrabold text-forest">
-                ${Math.round(listing.rentUsd)}
-                <span className="text-base font-normal text-muted-foreground">{t('perMonth')}</span>
-              </p>
-              <StatusChip status={listing.status} publishedAt={new Date()} />
-            </div>
-            <div className="text-sm text-slate_brand">
-              <p>
-                {listing.bedrooms} {t('beds')} · {listing.bathrooms} {t('baths')} · {tt(listing.type)}
-              </p>
-              <p className="text-muted-foreground">
-                {listing.district}
-                {listing.neighborhood ? ` · ${listing.neighborhood}` : ''}
-              </p>
-              <p className="mt-1 text-muted-foreground">
-                {t('deposit')}: ${Math.round(listing.depositUsd)}
-              </p>
-            </div>
+            {priceBlock}
+            {heading}
+            {statGrid}
             <Button className="w-full" size="lg" onClick={openRequest}>
               {t('requestCta')}
             </Button>
@@ -195,8 +227,12 @@ export default function PublicListingPage({ params }: { params: Promise<{ id: st
 
       {/* Sticky primary CTA — phone/tablet only (§5: one Lime action). */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-mist/95 backdrop-blur lg:hidden">
-        <div className="mx-auto max-w-[480px] px-4 py-3 md:max-w-3xl">
-          <Button className="w-full" size="lg" onClick={openRequest}>
+        <div className="mx-auto flex max-w-[480px] items-center gap-4 px-4 py-3 md:max-w-3xl">
+          <p className="flex-none font-display text-xl font-extrabold text-forest">
+            ${Math.round(listing.rentUsd)}
+            <span className="text-xs font-normal text-muted-foreground">{t('perMonth')}</span>
+          </p>
+          <Button className="flex-1" size="lg" onClick={openRequest}>
             {t('requestCta')}
           </Button>
         </div>
@@ -237,7 +273,7 @@ export default function PublicListingPage({ params }: { params: Promise<{ id: st
               {t('successBody', { agency: listing.agency.name })}
             </p>
             <Button asChild className="w-full">
-              <Link href="/requests">{t('goRequests')}</Link>
+              <Link href="/requests?sent=1">{t('goRequests')}</Link>
             </Button>
           </div>
         )}

@@ -10,6 +10,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "admin:promote": "node --env-file=../../.env scripts/promote-admin.mjs",
+    "db:seed-test": "node --env-file=../../.env scripts/seed-testdata.mjs",
     "test": "vitest run"
   },
   "dependencies": {

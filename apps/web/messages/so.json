@@ -10,6 +10,7 @@
     "navBrowse": "Daawo",
     "navList": "Liis-geli",
     "navProfile": "Akoonka",
+    "verifiedAgency": "Wakaalad la hubiyay",
     "browseCta": "Daawo guryaha",
     "browseHint": "Si xor ah u daawo — waxaad gashaa marka aad guri codsanayso oo keliya"
   },
@@ -21,7 +22,9 @@
     "browseCta": "Daawo guryaha"
   },
   "browse": {
-    "title": "Guryo kiro ah",
+    "title": "Daawo guryaha",
+    "subtitle": "Guri kasta wakaalad la hubiyay ayaa liis-gelisay",
+    "searchPlaceholder": "Raadi guri ama degmo…",
     "filters": "Shaandhaynta",
     "district": "Degmada",
     "rent": "Kirada (USD/bishii)",
@@ -47,6 +50,14 @@
   },
   "listingDetail": {
     "back": "Dib u noqo",
+    "title": "{type} {beds} qol",
+    "aboutTitle": "Faahfaahin",
+    "verified": "La hubiyay",
+    "homesCount": "{count} guri",
+    "statBeds": "Qol jiif",
+    "statBaths": "Musqul",
+    "statArea": "Baaxad",
+    "statType": "Nooca",
     "notFound": "Gurigan hadda lama heli karo.",
     "perMonth": "/bishii",
     "beds": "qol jiif",
@@ -79,6 +90,18 @@
     "signinButton": "Gal",
     "bedsShort": "qol",
     "viewingOn": "Daawasho: {date}",
+    "bannerTitle": "Codsigaaga waa la diray!",
+    "bannerBody": "Wakaaladda ayaa kula soo xiriiri doonta · Request sent",
+    "stepOf": "Heerka {n}/{total}",
+    "captureId": "Ka qaad sawir aqoonsiga",
+    "steps": {
+      "requested": { "label": "La codsaday", "sub": "Codsigaagu safka ayuu ku jiraa" },
+      "viewing_scheduled": { "label": "Daawasho la qorsheeyay", "sub": "Wakaaladda ayaa waqti daawasho qortay" },
+      "awaiting_docs": { "label": "Dukumentiga la sugayo", "sub": "Ka qaad sawir aqoonsiga qaranka ama baasaboorka" },
+      "docs_in_review": { "label": "Dukumenti dib u eegis", "sub": "Wakaaladda ayaa eegaysa aqoonsigaaga" },
+      "approved": { "label": "La ansixiyay", "sub": "Heshiiska ayaa la diyaarinayaa" },
+      "closed": { "label": "La kiraystay", "sub": "Kiradaadu waa la xaqiijiyay" }
+    },
     "withdraw": "Ka noqo",
     "withdrawTitle": "Ma ka noqonaysaa codsigan?",
     "withdrawBody": "Wakaaladdu mar dambe ma arki doonto. Mar dambe ayaad dib u codsan kartaa gurigan.",
@@ -141,18 +164,30 @@
   "owner": {
     "notOwner": "Akoonkani guri kuma laha Guri. Haddii wakaalad ku casuuntay, ku gal email-ka casuumaadda.",
     "backHome": "Ku noqo bogga hore",
+    "portal": "Bogga milkiilaha",
+    "portalRole": "Milkiile",
     "nav": {
       "dashboard": "Guudmar",
       "properties": "Guryaha",
       "income": "Dakhliga",
       "listHouse": "Liis-geli guri",
       "submissions": "Codsiyadayda",
-      "signOut": "Ka bax"
+      "signOut": "Ka bax",
+      "menu": "Fur liiska",
+      "close": "Xir liiska",
+      "expand": "Balaadhi liiska",
+      "collapse": "Yaree"
     },
     "heroEyebrow": "Milkiile",
     "greeting": "Soo dhawoow, {name}",
     "greetingAnon": "Soo dhawoow",
     "greetingSub": "Halkan ka arag xaaladda guryahaaga.",
+    "dashboard": {
+      "subtitle": "{count} guri oo Guri ku jira",
+      "paymentsReceived": "{count, plural, =0 {Bishan weli lacag lama helin} one {# lacag oo bishan la helay} other {# lacagood oo bishan la helay}}",
+      "recentPayments": "Lacagihii ugu dambeeyay",
+      "viewAll": "Dhammaan"
+    },
     "metrics": {
       "properties": "Guryaha",
       "occupied": "La degan yahay",
@@ -167,13 +202,16 @@
     },
     "properties": {
       "title": "Guryahaaga",
+      "subtitle": "Guryaha ay wakaaladahaagu kuu maamulaan",
       "listAnother": "Liis-geli guri",
       "comingSoon": "U keen guri wakaalad",
       "emptyTitle": "Weli guri ma jiro",
       "emptyBody": "Marka wakaaladdaadu daabacdo gurigaaga, halkan ayuu ka soo muuqan doonaa.",
       "perMonth": "/bishii",
       "bedsShort": "qol",
-      "daysToEnd": "{days} maalmood ayaa hadhay"
+      "daysToEnd": "{days} maalmood ayaa hadhay",
+      "tenant": "Kiraystaha",
+      "statusLabel": "Xaaladda"
     },
     "detail": {
       "back": "Dhammaan guryaha",
@@ -189,6 +227,7 @@
     },
     "income": {
       "title": "Dakhliga",
+      "subtitle": "Kirada guryahaaga ee la helay",
       "property": "Guriga",
       "allProperties": "Dhammaan guryaha",
       "month": "Bisha",
@@ -196,9 +235,22 @@
       "propertyCol": "Guriga",
       "type": "Nooca",
       "amount": "Qadarka",
+      "filterAll": "Dhammaan",
+      "filterThisMonth": "Bishan",
+      "received": "La helay",
+      "totalReceived": "Wadarta la helay",
       "emptyTitle": "Weli lacag ma jirto",
       "emptyBody": "Lacagaha ay wakaaladdaadu diiwaangeliso halkan ayay ka soo muuqan doonaan."
     }
+  },
+  "auth": {
+    "tagline": "Kirada Muqdisho",
+    "brandTitle": "Hoy aad ku kalsoonaan karto.",
+    "brandSubtitle": "Guri kasta oo Guri ku jira waxaa liis-geliyay wakaalad la xaqiijiyay oo Muqdisho ah.",
+    "point1": "Wakaalado la xaqiijiyay oo keliya",
+    "point2": "Aqoonsigaaga waxaa la hubiyaa marka heshiisku dhamaado",
+    "point3": "Hal akoon oo doorar kasta",
+    "backHome": "Ku noqo bogga hore"
   },
   "signin": {
     "title": "Ku soo dhawoow Guri",
@@ -248,6 +300,7 @@
     "loading": "Waa la soo rarayaa…",
     "notStaff": "Akoonkani wakaalad kuma jiro. Weydiiso maamulaha wakaaladdaada inuu kugu daro email-kaaga.",
     "backHome": "Ku noqo bogga hore",
+    "brand": "Guri console",
     "subtitle": "Konsoolka wakaaladda",
     "roles": {
       "admin": "Madaxa wakaaladda",
@@ -261,7 +314,11 @@
       "owners": "Mulkiilayaasha",
       "staff": "Shaqaalaha",
       "more": "Kale",
-      "signOut": "Ka bax"
+      "signOut": "Ka bax",
+      "expand": "Balaadhi",
+      "collapse": "Yaree",
+      "close": "Xir",
+      "menu": "Liiska"
     }
   },
   "intake": {
@@ -380,11 +437,28 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "greeting": "Subax wanaagsan, {name}",
+    "newListing": "Liis-geli guri cusub",
     "unanswered": "Codsiyo aan laga jawaabin",
     "awaitingDocs": "Heshiisyo sugaya dukumenti",
     "listings": "Guryaha xaaladdooda",
     "todaysViewings": "Daawashooyinka maanta",
-    "noViewings": "Maanta daawasho lama qorsheyn."
+    "noViewings": "Maanta daawasho lama qorsheyn.",
+    "statActiveListings": "Liisas firfircoon",
+    "statNewLeads": "Codsiyo cusub",
+    "statViewingsWeek": "Daawashooyin toddobaadkan",
+    "statRentMonth": "Kirada bishan",
+    "newLeadsTitle": "Codsiyada cusub",
+    "viewAll": "Dhammaan",
+    "noLeads": "Weli codsi cusub ma jiro.",
+    "portfolioTitle": "Guryahaaga",
+    "stage": {
+      "requested": "Cusub",
+      "viewing_scheduled": "Daawasho",
+      "awaiting_docs": "Sugaya dukumenti",
+      "docs_in_review": "Dib u eegis",
+      "approved": "La ansixiyay"
+    }
   },
   "queue": {
     "title": "Codsiyada",
@@ -607,20 +681,58 @@
     "notAdmin": "Akoonkani maamulaha platform-ka maaha.",
     "backHome": "Ku noqo bogga hore",
     "adminBadge": "Maamulka platform-ka",
+    "brand": "Guri admin",
+    "portal": "Console-ka platform-ka",
+    "portalRole": "Admin · Platform",
     "signOut": "Ka bax",
     "nav": {
+      "overview": "Guudmarka",
       "agencies": "Wakaaladaha",
       "audit": "Hubinta",
-      "metrics": "Tirakoob"
+      "metrics": "Tirakoob",
+      "expand": "Balaadhi",
+      "collapse": "Yaree",
+      "close": "Xir",
+      "menu": "Liiska"
     },
+    "overview": {
+      "title": "Guudmarka suuqa",
+      "subtitle": "Tirakoobka guud",
+      "kpiAgencies": "Wakaalado firfircoon",
+      "kpiAgenciesDelta": "{count} sugitaan",
+      "kpiListings": "Liisas firfircoon",
+      "kpiTenancies": "Kiraysiyo firfircoon",
+      "kpiRent": "Kirada la diiwaangeliyay",
+      "deltaThisMonth": "+{count} bishan",
+      "thisMonth": "bishan",
+      "chartTitle": "Kiraysiyo cusub bishiiba",
+      "districtsTitle": "Liisaska degmooyinka",
+      "noDistricts": "Weli liisas la daabacay ma jiro.",
+      "otherDistricts": "Kale",
+      "pendingTitle": "Sugitaanka ansixinta",
+      "pendingBody": "{count, plural, =1 {wakaalad ayaa sugaysa xaqiijin} other {wakaaladood ayaa sugaya xaqiijin}}",
+      "pendingCta": "Eeg wakaaladaha",
+      "funnelsTitle": "Waxqabadka wakaalad kasta"
+    },
+    "agenciesSubtitle": "Dhammaan wakaaladaha suuqa",
+    "searchAgencies": "Raadi wakaalad…",
+    "filterAll": "Dhammaan",
+    "colAgency": "Wakaaladda",
+    "colStatus": "Xaaladda",
+    "colListings": "Liisas",
+    "colTenancies": "Kiraysiyo",
+    "colRent": "Kirada bishan",
+    "colJoined": "Ku biirtay",
+    "verify": "Xaqiiji",
+    "verifyLong": "Xaqiiji wakaaladdan",
     "approve": "Ansixi",
     "reactivate": "Dib u daar",
     "suspend": "Hakii",
     "noAgencies": "Weli wakaalad ma jirto.",
     "status": {
-      "active": "Firfircoon",
-      "pending": "La sugayo",
-      "suspended": "La hakiyay"
+      "active": "La hubiyay",
+      "pending": "Sugitaan",
+      "suspended": "La joojiyay"
     },
     "auditView": {
       "title": "Hubinta heshiiska",

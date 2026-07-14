@@ -82,6 +82,7 @@ export class ListingsService {
         type: input.type,
         bedrooms: input.bedrooms,
         bathrooms: input.bathrooms,
+        areaSqm: input.areaSqm,
         rentUsd: input.rentUsd,
         depositUsd: input.depositUsd,
         descriptionSo: input.descriptionSo,
@@ -109,6 +110,7 @@ export class ListingsService {
         type: input.type,
         bedrooms: input.bedrooms,
         bathrooms: input.bathrooms,
+        areaSqm: input.areaSqm,
         rentUsd: input.rentUsd,
         depositUsd: input.depositUsd,
         descriptionSo: input.descriptionSo,
@@ -171,6 +173,7 @@ export class ListingsService {
       type: l.type,
       bedrooms: l.bedrooms,
       bathrooms: l.bathrooms,
+      areaSqm: l.areaSqm,
       rentUsd: Number(l.rentUsd),
       depositUsd: Number(l.depositUsd),
       descriptionSo: l.descriptionSo,
@@ -293,6 +296,14 @@ export class ListingsService {
   async publicList(query: BrowseQueryInput) {
     const where = {
       ...this.publicWhere(),
+      ...(query.q
+        ? {
+            OR: [
+              { district: { contains: query.q, mode: 'insensitive' as const } },
+              { neighborhood: { contains: query.q, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
       ...(query.district ? { district: query.district } : {}),
       ...(query.type ? { type: query.type } : {}),
       ...(query.beds !== undefined ? { bedrooms: { gte: query.beds } } : {}),
@@ -314,6 +325,9 @@ export class ListingsService {
         orderBy,
         skip: (query.page - 1) * BROWSE_PAGE_SIZE,
         take: BROWSE_PAGE_SIZE,
+        // Customers deal with the accountable agency, never the owner (§2) —
+        // the verified-agency badge on every card is the core promise (§6).
+        include: { agency: { select: { name: true } } },
       }),
       // Slider bounds for the UI: the max rent / bedrooms across everything
       // currently browsable (unfiltered), so the range always fits the market.
@@ -340,6 +354,7 @@ export class ListingsService {
         bathrooms: l.bathrooms,
         rentUsd: Number(l.rentUsd),
         status: l.status,
+        agencyName: l.agency.name,
         coverUrl: l.photos[0]
           ? await this.storage.presignGet(l.photos[0], PHOTO_URL_TTL_SECONDS)
           : null,
@@ -358,9 +373,14 @@ export class ListingsService {
   async publicDetail(id: string) {
     const l = await this.prisma.listing.findFirst({
       where: { id, ...this.publicWhere() },
-      include: { agency: { select: { name: true, phone: true } } },
+      include: { agency: { select: { id: true, name: true, phone: true } } },
     });
     if (!l) throw new NotFoundException('listing_not_found');
+    // How many homes this agency currently has on show — the "N guri" figure
+    // beside the verified badge (SPEC §5 detail).
+    const agencyListingCount = await this.prisma.listing.count({
+      where: { agencyId: l.agency.id, ...this.publicWhere() },
+    });
     return {
       id: l.id,
       district: l.district,
@@ -368,6 +388,7 @@ export class ListingsService {
       type: l.type,
       bedrooms: l.bedrooms,
       bathrooms: l.bathrooms,
+      areaSqm: l.areaSqm,
       rentUsd: Number(l.rentUsd),
       depositUsd: Number(l.depositUsd),
       descriptionSo: l.descriptionSo,
@@ -381,6 +402,7 @@ export class ListingsService {
         name: l.agency.name,
         phone: l.agency.phone,
         waUrl: `https://wa.me/${l.agency.phone.replace(/[^0-9]/g, '')}`,
+        listingCount: agencyListingCount,
       },
     };
   }
