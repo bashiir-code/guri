@@ -1,10 +1,15 @@
 # Guri — pilot launch runbook (SPEC §13)
 
-Deploy target: **web → Vercel**, **API + worker + Postgres → Railway (EU
-region)**, **files → Cloudflare R2 + CDN**. EU region is the lowest practical
-latency to Mogadishu (SPEC §11). One long-running API container also runs the
-pg-boss worker and `@nestjs/schedule` tick — do **not** split it into
-serverless functions (jobs, webhooks, and PDF rendering need a live process).
+Deploy target: **everything → Railway (EU region)** — web, API + worker, and
+Postgres are three services in one Railway project — **files → Cloudflare R2 +
+CDN**. EU region is the lowest practical latency to Mogadishu (SPEC §11). One
+long-running API container also runs the pg-boss worker and `@nestjs/schedule`
+tick — do **not** split it into serverless functions (jobs, webhooks, and PDF
+rendering need a live process).
+
+CI: GitHub Actions (`.github/workflows/ci.yml`) builds all packages and runs
+the API suite on every push. In Railway, enable **"Wait for CI"** on both
+services so a red build can never reach prod.
 
 The pilot targets 2–3 agencies, 30–50 live listings concentrated in 2–3
 districts (e.g. Hodan, Wadajir), run 6–8 weeks with a weekly funnel review.
@@ -21,7 +26,7 @@ Set these in each host's dashboard (never commit real values). Names match
 |---|---|---|
 | `DATABASE_URL` | Railway Postgres internal URL | append `?sslmode=require` in prod |
 | `API_PORT` | `4000` (or Railway `$PORT`) | |
-| `WEB_ORIGIN` | `https://guri.so` | CORS allowlist |
+| `WEB_ORIGIN` | `https://getguri.com,https://www.getguri.com` | CORS allowlist (comma-separated) |
 | `CLERK_SECRET_KEY` | Clerk **live** secret (`sk_live_…`) | |
 | `CLERK_PUBLISHABLE_KEY` | Clerk **live** publishable | used by API for issuer resolution |
 | `CLERK_WEBHOOK_SECRET` | Clerk **live** webhook signing secret (`whsec_…`) | from the prod webhook endpoint |
@@ -37,15 +42,19 @@ Set these in each host's dashboard (never commit real values). Names match
 | `LOG_LEVEL` | `info` | pino level |
 | `SMS_*` | **pending** — see §6 | Hormuud gateway not yet wired |
 
-### Web (Vercel project)
+### Web (Railway service)
 | Var | Value | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | `https://api.guri.so` | |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk **live** publishable | |
+| `NEXT_PUBLIC_API_URL` | `https://api.getguri.com` | baked in at **build** time |
+| `NEXT_PUBLIC_SITE_URL` | `https://getguri.com` | canonical/OG URLs, robots, sitemap |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk **live** publishable | baked in at **build** time |
 | `CLERK_SECRET_KEY` | Clerk **live** secret | server components |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/sign-in` / `/sign-up` | |
 | `NEXT_PUBLIC_SENTRY_DSN` | Sentry project DSN (client) | leave blank to disable |
 | `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE` | `0.1` | |
+
+> `NEXT_PUBLIC_*` values are inlined during `next build` — set them on the
+> Railway service **before** deploying, and redeploy after changing one.
 
 > Rotate every secret that ever touched the dev instance before go-live. The
 > dev Clerk instance (`precise-troll-46`) must **not** be used in prod.
@@ -61,15 +70,21 @@ Set these in each host's dashboard (never commit real values). Names match
    this in-app once the API is up; no SQL seed in prod).
 
 **API + worker (Railway)**
-1. Deploy the repo; build `pnpm --filter @guri/api build`, start `node dist/main.js`.
+1. Service root = **repo root**. Build `pnpm --filter @guri/api build` (runs
+   shared build + `prisma generate` + nest build), start
+   `pnpm --filter @guri/api start`, pre-deploy `pnpm --filter @guri/api db:deploy`.
 2. One instance runs the web API **and** the pg-boss worker + 15-min tick. Keep
    `JOBS_DISABLED` **unset** (only the demo scripts set it).
-3. Confirm `GET /api.guri.so/health` → `{"status":"ok","db":"up","bucket":"up"}`.
+3. Set the Railway **healthcheck path to `/health`** so bad deploys roll back.
+4. Confirm `GET https://api.getguri.com/health` → `{"status":"ok","db":"up","bucket":"up"}`.
 
-**Web (Vercel)**
-1. Import the repo, root `apps/web`, framework Next.js. Build `pnpm --filter
-   @guri/web build`.
-2. Set env vars (§1). Deploy.
+**Web (Railway)**
+1. Service root = **repo root** (the pnpm workspace must be visible — never
+   `apps/web`). Build `pnpm --filter @guri/web build` (builds `@guri/shared`
+   first; a bare `next build` breaks on the workspace import), start
+   `pnpm --filter @guri/web start` (`next start` honors Railway's `$PORT`).
+2. Set env vars (§1) **before** the first build. Deploy.
+3. Set the Railway **healthcheck path to `/api/health`**.
 
 **Files (Cloudflare R2 + CDN)**
 1. Create the `guri` bucket with default (server-side) encryption.
@@ -79,7 +94,7 @@ Set these in each host's dashboard (never commit real values). Names match
 
 **Clerk (live instance)**
 1. Create the production instance; enable Google + email/password (no phone/SMS).
-2. Add the webhook endpoint `https://api.guri.so/webhooks/clerk` (events:
+2. Add the webhook endpoint `https://api.getguri.com/webhooks/clerk` (events:
    `user.created`, `user.updated`, `user.deleted`); copy its signing secret to
    `CLERK_WEBHOOK_SECRET`.
 3. **CRITICAL — add the email claim to the session token.** Dashboard →
@@ -97,12 +112,17 @@ Set these in each host's dashboard (never commit real values). Names match
 
 ## 3. Domains
 
-- Apex `guri.so` → Vercel (web). Add `www.guri.so` → redirect to apex.
-- Subdomain `api.guri.so` → Railway API service (custom domain + TLS).
-- Cloudflare proxied DNS; **HTTPS only** (HSTS on). Point the R2 CDN at e.g.
-  `cdn.guri.so` for public photos.
-- Update `WEB_ORIGIN`, `NEXT_PUBLIC_API_URL`, and the Clerk allowed origins /
-  webhook URL to the real hostnames.
+- Apex `getguri.com` → Railway **web** service: add it as a custom domain in
+  Railway (Settings → Networking), then CNAME the Cloudflare apex record to the
+  target Railway shows. Add `www.getguri.com` the same way (or a Cloudflare
+  redirect rule to the apex).
+- Subdomain `api.getguri.com` → Railway **API** service (custom domain + TLS).
+- Cloudflare proxied DNS is fine, but SSL/TLS mode must be **Full** —
+  *Flexible produces a bare Cloudflare 502 with no `x-railway-*` headers*
+  (learned the hard way, 2026-07-14). **HTTPS only** (HSTS on). Point the R2
+  CDN at e.g. `cdn.getguri.com` for public photos.
+- Update `WEB_ORIGIN`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`, and the
+  Clerk allowed origins / webhook URL to the real hostnames.
 
 ---
 
@@ -131,8 +151,8 @@ Set these in each host's dashboard (never commit real values). Names match
 **Observability**
 - [ ] Sentry receiving events from **both** apps (trigger one test error each).
 - [ ] Uptime monitors (UptimeRobot or equiv) on:
-      - `https://guri.so` (web, HTTP 200)
-      - `https://api.guri.so/health` (API, expects 200; alert on 503/timeout)
+      - `https://getguri.com` (web, HTTP 200)
+      - `https://api.getguri.com/health` (API, expects 200; alert on 503/timeout)
       — 1-min interval, alert to the on-call email/WhatsApp.
 - [ ] pino logs flowing to Railway; spot-check that no secret/PIN/token/presigned
       URL appears in them.
@@ -149,8 +169,8 @@ Set these in each host's dashboard (never commit real values). Names match
 - [ ] Somali + English copy reviewed on every screen.
 
 **Rollback plan**
-- [ ] Previous Railway deploy pinned; DB restore procedure (README) rehearsed;
-      Vercel instant rollback confirmed.
+- [ ] Previous Railway deploy pinned on **both** services; DB restore procedure
+      (README) rehearsed; Railway one-click redeploy of the prior build confirmed.
 
 ---
 
