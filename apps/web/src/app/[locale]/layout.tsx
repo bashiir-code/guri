@@ -19,7 +19,9 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: 'Guri',
+  // Absolute base for canonical/OG URLs (per-listing metadata relies on it).
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://getguri.com'),
+  title: { default: 'Guri', template: '%s | Guri' },
   description: 'Find a home in Mogadishu through verified agencies',
 };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useAuthStatus } from '@/hooks/use-auth-status';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
@@ -35,8 +35,7 @@ type RequestState = 'idle' | 'confirm' | 'success' | 'signin' | 'duplicate' | 'e
 // Phone: snap-scroll gallery, stacked facts + 4-up stat grid, agency card,
 // sticky bottom CTA (SPEC §5 detail).
 // Laptop: two columns — gallery + description left, sticky action rail right.
-export default function PublicListingPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function PublicListingPage({ id }: { id: string }) {
   const t = useTranslations('listingDetail');
   const tt = useTranslations('listings.types');
   const tc = useTranslations('common');
