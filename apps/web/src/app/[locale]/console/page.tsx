@@ -120,8 +120,10 @@ export default function ConsoleDashboard() {
       </div>
 
       <div className="grid items-start gap-3.5 md:gap-5 lg:grid-cols-[1.5fr_1fr]">
-        {/* New leads */}
-        <div className="animate-rise-in flex flex-col gap-4 rounded-card bg-card p-6 shadow-sm">
+        {/* New leads. min-w-0: as a grid child this defaults to min-width:auto,
+            so without it the card refuses to shrink below its content and the
+            lead rows overflow the viewport on the phone instead of truncating. */}
+        <div className="animate-rise-in flex min-w-0 flex-col gap-4 rounded-card bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-[17px] font-bold text-forest">{t('newLeadsTitle')}</h2>
             <Link href="/console/leads" className="text-[13px] font-semibold text-slate_brand hover:text-forest">
@@ -162,7 +164,7 @@ export default function ConsoleDashboard() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3.5 md:gap-5">
+        <div className="flex min-w-0 flex-col gap-3.5 md:gap-5">
           {/* Today's viewings — forest card */}
           <div className="animate-rise-in flex flex-col gap-3.5 rounded-card bg-forest p-6">
             <h2 className="font-display text-[17px] font-bold text-mist">{t('todaysViewings')}</h2>
