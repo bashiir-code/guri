@@ -85,9 +85,12 @@ export function ProfileCard() {
       .join('') || '☺';
 
   return (
-    <div className="animate-rise-in">
+    // Phone: one stacked column. Laptop: a bento grid — header banner across
+    // the top, the details form as the left tile, shortcuts + role switcher
+    // stacked on the right — so the card no longer towers over the hero.
+    <div className="animate-rise-in lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
       {/* profile header — avatar circle + name + contact phone */}
-      <div className="mb-5 flex items-center gap-4 px-1">
+      <div className="mb-5 flex items-center gap-4 px-1 lg:col-span-2 lg:mb-0">
         <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-forest font-display text-xl font-extrabold text-lime">
           {initials}
         </span>
@@ -129,58 +132,60 @@ export function ProfileCard() {
         </CardContent>
       </Card>
 
-      {/* shortcut list — chevron rows, like the reference card list */}
-      <Card className="mt-4">
-        <CardContent className="divide-y p-0">
-          <ProfileRow href="/requests" label={t('myRequests')} />
-          <ProfileRow href="/legal" label={tl('indexTitle')} />
-          <ProfileRow href="/legal/contact" label={tf('contact')} />
-        </CardContent>
-      </Card>
+      <div className="mt-4 space-y-4 lg:mt-0">
+        {/* shortcut list — chevron rows, like the reference card list */}
+        <Card>
+          <CardContent className="divide-y p-0">
+            <ProfileRow href="/requests" label={t('myRequests')} />
+            <ProfileRow href="/legal" label={tl('indexTitle')} />
+            <ProfileRow href="/legal/contact" label={tf('contact')} />
+          </CardContent>
+        </Card>
 
-      {/* Switch role (§2, rule 15): one account, several surfaces. Roles are
-          resolved server-side by /me — this only presents the surfaces this
-          person already has; nobody can grant themselves anything here. */}
-      <Card className="mt-4">
-        <CardHeader className="pb-1">
-          <CardTitle className="text-lg">{t('switchRole')}</CardTitle>
-          <CardDescription>{t('switchRoleHint')}</CardDescription>
-        </CardHeader>
-        <CardContent className="divide-y p-0 pt-1">
-          <RoleRow
-            href="/browse"
-            icon={<Search className="h-5 w-5" aria-hidden />}
-            label={t('roleCustomer')}
-            description={t('roleCustomerDesc')}
-          />
-          {me.roles.owner && (
+        {/* Switch role (§2, rule 15): one account, several surfaces. Roles are
+            resolved server-side by /me — this only presents the surfaces this
+            person already has; nobody can grant themselves anything here. */}
+        <Card>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-lg">{t('switchRole')}</CardTitle>
+            <CardDescription>{t('switchRoleHint')}</CardDescription>
+          </CardHeader>
+          <CardContent className="divide-y p-0 pt-1">
             <RoleRow
-              href="/owner"
-              icon={<Home className="h-5 w-5" aria-hidden />}
-              label={t('roleOwner')}
-              description={t('roleOwnerDesc')}
+              href="/browse"
+              icon={<Search className="h-5 w-5" aria-hidden />}
+              label={t('roleCustomer')}
+              description={t('roleCustomerDesc')}
             />
-          )}
-          {isStaff && (
-            <RoleRow
-              href="/console"
-              icon={<Briefcase className="h-5 w-5" aria-hidden />}
-              label={t('goConsole')}
-              description={t('roleAgencyDesc')}
-            />
-          )}
-          {me.roles.platformAdmin && (
-            <RoleRow
-              href="/admin"
-              icon={<ShieldCheck className="h-5 w-5" aria-hidden />}
-              label={t('goAdmin')}
-              description={t('roleAdminDesc')}
-            />
-          )}
-        </CardContent>
-      </Card>
+            {me.roles.owner && (
+              <RoleRow
+                href="/owner"
+                icon={<Home className="h-5 w-5" aria-hidden />}
+                label={t('roleOwner')}
+                description={t('roleOwnerDesc')}
+              />
+            )}
+            {isStaff && (
+              <RoleRow
+                href="/console"
+                icon={<Briefcase className="h-5 w-5" aria-hidden />}
+                label={t('goConsole')}
+                description={t('roleAgencyDesc')}
+              />
+            )}
+            {me.roles.platformAdmin && (
+              <RoleRow
+                href="/admin"
+                icon={<ShieldCheck className="h-5 w-5" aria-hidden />}
+                label={t('goAdmin')}
+                description={t('roleAdminDesc')}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="mt-4 space-y-2 lg:col-span-2 lg:mt-0">
         <Button variant="ghost" className="w-full" onClick={() => void signOut()}>
           {t('signOut')}
         </Button>
