@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { BadgeCheck, ChevronLeft, MessageCircle, Phone } from 'lucide-react';
 import { Link, useRouter } from '@/i18n/navigation';
 import { api, ApiError } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { BottomSheet } from '@/components/bottom-sheet';
 import { PhotoGallery } from '@/components/photo-gallery';
@@ -43,6 +44,8 @@ export default function PublicListingPage({ id }: { id: string }) {
   const router = useRouter();
   const { isSignedIn } = useAuthStatus();
   const [sheet, setSheet] = useState<RequestState>('idle');
+  // Laptop gallery: which photo fills the hero slot (thumbnails swap it in).
+  const [heroIdx, setHeroIdx] = useState(0);
 
   const { data: listing, isLoading } = useQuery<PublicListing>({
     queryKey: ['public-listing', id],
@@ -163,28 +166,42 @@ export default function PublicListingPage({ id }: { id: string }) {
           {/* Phone/tablet gallery: full-bleed, one photo per swipe, dots. */}
           <PhotoGallery photos={listing.photos} className="lg:hidden" />
 
-          {/* Laptop gallery: hero photo + thumbnail grid. */}
+          {/* Laptop gallery: hero photo + thumbnail grid; clicking a
+              thumbnail swaps it into the hero so every photo can be seen big. */}
           <div className="hidden lg:block">
             {listing.photos.length === 0 && <div className="aspect-[16/9] rounded-card bg-muted" />}
-            {listing.photos[0] && (
+            {listing.photos.length > 0 && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={listing.photos[0]}
+                src={listing.photos[heroIdx] ?? listing.photos[0]}
                 alt=""
                 className="aspect-[16/9] w-full rounded-card object-cover"
               />
             )}
             {listing.photos.length > 1 && (
               <div className="mt-2 grid grid-cols-4 gap-2">
-                {listing.photos.slice(1, 5).map((url, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                {listing.photos.map((url, i) => (
+                  <button
                     key={i}
-                    src={url}
-                    alt=""
-                    className="aspect-[4/3] w-full rounded-xl object-cover"
-                    loading="lazy"
-                  />
+                    type="button"
+                    onClick={() => setHeroIdx(i)}
+                    aria-label={`${t('photoN', { n: i + 1 })}`}
+                    aria-current={i === heroIdx}
+                    className={cn(
+                      'overflow-hidden rounded-xl transition-opacity',
+                      i === heroIdx
+                        ? 'ring-2 ring-forest ring-offset-2'
+                        : 'opacity-80 hover:opacity-100',
+                    )}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={url}
+                      alt=""
+                      className="aspect-[4/3] w-full object-cover"
+                      loading="lazy"
+                    />
+                  </button>
                 ))}
               </div>
             )}

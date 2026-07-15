@@ -74,6 +74,7 @@
     "bathsShort": "ba"
   },
   "listingDetail": {
+    "photoN": "Photo {n}",
     "back": "Back",
     "notFound": "This listing is no longer available.",
     "perMonth": "/month",
