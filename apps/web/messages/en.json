@@ -517,6 +517,7 @@
     "call": "Call",
     "viewing": "Viewing",
     "noViewingYet": "No viewing scheduled yet.",
+    "openQueue": "Open the queue to schedule",
     "reasonRecorded": "Recorded note",
     "proceed": "Proceeding — request ID",
     "declinedOutcome": "Not interested",

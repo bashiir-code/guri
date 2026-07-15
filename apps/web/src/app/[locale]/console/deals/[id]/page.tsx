@@ -237,6 +237,13 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
             </p>
           )}
 
+          {deal.state === 'requested' && (
+            // Scheduling lives on the queue screen (one slot per listing —
+            // the agent picks WHICH customer there), so route them to it.
+            <Button asChild size="sm">
+              <Link href={`/console/listings/${deal.listing.id}/requests`}>{t('openQueue')}</Link>
+            </Button>
+          )}
           {deal.state === 'viewing_scheduled' && (
             <>
               <div className="flex flex-wrap gap-2">
