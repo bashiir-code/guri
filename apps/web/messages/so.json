@@ -362,7 +362,36 @@
       "serves": "Waxay adeegtaa",
       "empty": "Weli wakaalad halkan ma jirto.",
       "choose": "Kula liis-geli wakaaladdan",
-      "back": "Ku noqo bogga hore"
+      "back": "Ku noqo bogga hore",
+      "join": {
+        "title": "Ma leedahay wakaalad? Ku xaqiiji Guri.",
+        "body": "Guri kastaa waxaa matasha wakaalad la xaqiijiyay. Codso hoos, kooxdayaduna way dib u eegi doontaa oo ku diyaarin doontaa — iskaa iskuma diiwaangelin kartid; wakaalad kasta si shakhsi ah ayaan u soo dhoweynaa.",
+        "apply": "Codso in lagu xaqiijiyo",
+        "whatsapp": "WhatsApp",
+        "email": "Email noo dir",
+        "waText": "Salaan Guri — waxaan jeclaan lahaa inaan diiwaangeliyo wakaaladdayda oo la xaqiijiyo."
+      }
+    },
+    "apply": {
+      "badge": "Wakaalado la xaqiijiyay oo keliya",
+      "title": "Codso inaad noqoto wakaalad la xaqiijiyay",
+      "subtitle": "Noo sheeg wakaaladdaada. Kooxdayadu codsi kasta way dib u eegtaa waxayna kula soo xiriiri doontaa si ay kuu diyaariso — soo gudbintani ma abuurto akoon mana siiso gelitaan.",
+      "agencyName": "Magaca wakaalada",
+      "phone": "Telefoonka wakaalada (WhatsApp)",
+      "phoneHint": "Tan ayaan kugu soo xiriiri doonnaa — gelitaan maaha.",
+      "districts": "Degmooyinka aad adeegto",
+      "contactName": "Magacaaga",
+      "contactEmail": "Emailkaaga",
+      "contactEmailHint": "Kooxdu emailkan ayay ku casuumi doontaa marka wakaaladdaada la ansixiyo.",
+      "note": "Wax kale? (ikhtiyaari)",
+      "notePlaceholder": "Immisa guri ayaad maamushaa, halka aad ku taal, iwm.",
+      "submit": "Dir codsiga",
+      "submitting": "Waa la dirayaa…",
+      "invalid": "Fadlan hubi meelaha la calaamadeeyay.",
+      "failed": "Wax baa qaldamay. Fadlan mar kale isku day.",
+      "successTitle": "Codsiga waa la helay",
+      "successBody": "Mahadsanid — kooxda Guri way dib u eegi doontaa waxayna kula soo xiriiri doontaa WhatsApp ama email. Ansixinta waxaa maamula kooxdayada.",
+      "backToDirectory": "Ku noqo wakaaladaha"
     },
     "wizard": {
       "title": "Liis-geli gurigaaga",
@@ -760,6 +789,10 @@
     "verifyLong": "Xaqiiji wakaaladdan",
     "approve": "Ansixi",
     "reactivate": "Dib u daar",
+    "applications": "Codsiyada wakaaladaha",
+    "applicationsHint": "Wakaalado cusub oo codsaday inay ku biiraan. Ansixintu waxay ka dhigaysaa wakaalad la xaqiijiyay; diididdu way saartaa.",
+    "applyApprove": "Ansixi oo diyaari",
+    "applyDecline": "Diid",
     "suspend": "Hakii",
     "noAgencies": "Weli wakaalad ma jirto.",
     "status": {

@@ -7,5 +7,6 @@ import { AdminService } from './admin.service';
   imports: [AuthModule],
   controllers: [AdminController, AdminOversightController],
   providers: [AdminService],
+  exports: [AdminService],
 })
 export class AdminModule {}

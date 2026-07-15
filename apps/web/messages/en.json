@@ -362,7 +362,36 @@
       "serves": "Serves",
       "empty": "No agencies here yet.",
       "choose": "List with this agency",
-      "back": "Back to home"
+      "back": "Back to home",
+      "join": {
+        "title": "Run an agency? Get verified on Guri.",
+        "body": "Every home on Guri is represented by a verified agency. Apply below and our team will review it and get you set up — there's no self-signup; we onboard each agency personally.",
+        "apply": "Apply to get verified",
+        "whatsapp": "WhatsApp",
+        "email": "Email us",
+        "waText": "Hi Guri — I'd like to register my agency and get verified."
+      }
+    },
+    "apply": {
+      "badge": "Verified agencies only",
+      "title": "Apply to become a verified agency",
+      "subtitle": "Tell us about your agency. Our team reviews every application and reaches out to set you up — submitting this does not create an account or grant access.",
+      "agencyName": "Agency name",
+      "phone": "Agency phone (WhatsApp)",
+      "phoneHint": "We'll use this to reach you — it isn't a login.",
+      "districts": "Districts you serve",
+      "contactName": "Your name",
+      "contactEmail": "Your email",
+      "contactEmailHint": "The team will invite this email once your agency is approved.",
+      "note": "Anything else? (optional)",
+      "notePlaceholder": "How many homes you manage, where you're based, etc.",
+      "submit": "Send application",
+      "submitting": "Sending…",
+      "invalid": "Please check the highlighted fields.",
+      "failed": "Something went wrong. Please try again.",
+      "successTitle": "Application received",
+      "successBody": "Thank you — the Guri team will review it and reach out on WhatsApp or email. Approval is handled by our team.",
+      "backToDirectory": "Back to agencies"
     },
     "wizard": {
       "title": "List your house",
@@ -760,6 +789,10 @@
     "verifyLong": "Verify this agency",
     "approve": "Approve",
     "reactivate": "Reactivate",
+    "applications": "Agency applications",
+    "applicationsHint": "New agencies that applied to join. Approving one sets it up as a verified agency; declining removes it.",
+    "applyApprove": "Approve & set up",
+    "applyDecline": "Decline",
     "suspend": "Suspend",
     "noAgencies": "No agencies yet.",
     "status": {

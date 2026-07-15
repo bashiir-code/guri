@@ -120,6 +120,10 @@ export default function AdminAgenciesPage() {
         </div>
       </div>
 
+      {/* §2/§15 waiting list — public "become a verified agency" applications.
+          Approve provisions the real agency (createAgency); decline drops it. */}
+      <ApplicationsQueue />
+
       {!rows.length && <p className="text-muted-foreground">{t('noAgencies')}</p>}
 
       {/* Tablet/desktop: the design's table card. Rent + joined join at lg. */}
@@ -248,6 +252,88 @@ export default function AdminAgenciesPage() {
       {/* Onboarding a new agency (§5) — same form + endpoint, now in a sheet. */}
       <CreateAgencySheet open={createOpen} onClose={() => setCreateOpen(false)} />
     </main>
+  );
+}
+
+interface AgencyApplication {
+  id: string;
+  agencyName: string;
+  phone: string;
+  districts: string[];
+  contactName: string;
+  contactEmail: string;
+  note: string | null;
+  createdAt: string;
+}
+
+// The platform-admin waiting list (§2/§15). Public agency applications land
+// here; approving one runs createAgency (real agency + first admin member),
+// declining drops it. Hidden entirely when the queue is empty.
+function ApplicationsQueue() {
+  const t = useTranslations('admin');
+  const qc = useQueryClient();
+  const { data: apps } = useQuery<AgencyApplication[]>({
+    queryKey: ['agency-applications'],
+    queryFn: () => api('/admin/agency-applications'),
+  });
+  const review = useMutation({
+    mutationFn: (v: { id: string; action: 'approve' | 'decline' }) =>
+      api(`/admin/agency-applications/${v.id}/${v.action}`, { method: 'POST', body: {} }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['agency-applications'] });
+      void qc.invalidateQueries({ queryKey: ['agencies'] });
+      void qc.invalidateQueries({ queryKey: ['admin-metrics'] });
+    },
+  });
+
+  if (!apps?.length) return null;
+
+  return (
+    <section className="rounded-card border border-amber_reserved/40 bg-amber_reserved/[0.06] p-4 sm:p-5">
+      <div className="flex items-center gap-2">
+        <h2 className="font-display text-[17px] font-bold text-forest">{t('applications')}</h2>
+        <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-amber_reserved/25 px-1.5 text-[11.5px] font-bold text-[#8A5A10]">
+          {apps.length}
+        </span>
+      </div>
+      <p className="mt-0.5 text-[13px] text-slate_brand">{t('applicationsHint')}</p>
+      <div className="mt-4 flex flex-col gap-3">
+        {apps.map((a) => (
+          <div
+            key={a.id}
+            className="flex flex-col gap-3 rounded-xl bg-card p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between"
+          >
+            <div className="min-w-0">
+              <p className="font-semibold text-forest">{a.agencyName}</p>
+              <p className="mt-0.5 text-[13px] text-slate_brand">{a.districts.join(', ')}</p>
+              <p className="mt-1 break-words text-[13px] text-forest">
+                {a.contactName} · {a.contactEmail} · {a.phone}
+              </p>
+              {a.note && <p className="mt-1 text-[13px] text-muted-foreground">{a.note}</p>}
+            </div>
+            <div className="flex flex-none gap-2">
+              <Button
+                size="sm"
+                className="rounded-full"
+                disabled={review.isPending}
+                onClick={() => review.mutate({ id: a.id, action: 'approve' })}
+              >
+                {t('applyApprove')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full"
+                disabled={review.isPending}
+                onClick={() => review.mutate({ id: a.id, action: 'decline' })}
+              >
+                {t('applyDecline')}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

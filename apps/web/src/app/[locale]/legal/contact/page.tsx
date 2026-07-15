@@ -3,10 +3,7 @@
 import { useLocale } from 'next-intl';
 import { Mail, MessageCircle, ShieldCheck } from 'lucide-react';
 import { LegalTitle } from '@/components/legal-ui';
-
-const SUPPORT_EMAIL = 'support@getguri.com';
-const PRIVACY_EMAIL = 'privacy@getguri.com';
-const WHATSAPP = '+358 44 988 6596';
+import { PRIVACY_EMAIL, SUPPORT_EMAIL, WHATSAPP, whatsappHref } from '@/lib/contact';
 
 export default function ContactPage() {
   const locale = useLocale();
@@ -27,7 +24,7 @@ export default function ContactPage() {
       title: so ? 'WhatsApp' : 'WhatsApp',
       body: so ? 'Naga hel WhatsApp saacadaha shaqada.' : 'Reach us on WhatsApp during working hours.',
       action: WHATSAPP,
-      href: `https://wa.me/${WHATSAPP.replace(/[^0-9]/g, '')}`,
+      href: whatsappHref(),
     },
     {
       icon: ShieldCheck,

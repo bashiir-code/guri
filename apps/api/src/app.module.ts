@@ -24,6 +24,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { JobsModule } from './jobs/jobs.module';
 import { AccountModule } from './account/account.module';
 import { IntakesModule } from './intakes/intakes.module';
+import { AgencyApplicationsModule } from './agency-applications/agency-applications.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { IntakesModule } from './intakes/intakes.module';
     JobsModule,
     AccountModule,
     IntakesModule,
+    AgencyApplicationsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: GuriThrottlerGuard },

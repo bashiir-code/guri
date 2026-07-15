@@ -69,6 +69,7 @@ describe('object-scoping guards cover every route (§9)', () => {
     '/health/health.controller.ts', // uptime monitoring, no data
     '/listings/public-listings.controller.ts', // public browse (§5/§6)
     '/intakes/public-agencies.controller.ts', // public agency directory (§15)
+    '/agency-applications/public-agency-applications.controller.ts', // public "become an agency" application (§2/§15), throttled, no data read
     '/webhooks/clerk-webhook.controller.ts', // Svix-signature verified inside
   ]);
 

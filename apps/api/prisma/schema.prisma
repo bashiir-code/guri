@@ -28,6 +28,12 @@ enum AgencyStatus {
   suspended
 }
 
+enum AgencyApplicationStatus {
+  pending
+  approved
+  declined
+}
+
 // v1.10: verification is the can_verify permission on agency_members, not a
 // standalone role (CLAUDE.md rule 9).
 enum AgencyRole {
@@ -179,6 +185,33 @@ model Agency {
   intakes  Intake[]
 
   @@map("agencies")
+}
+
+// Public "become a verified agency" application (§2/§15). A lead awaiting the
+// platform admin's review — NOT an agency and grants no access. On approval the
+// admin creates the real agency (agencies row + first admin member) and this
+// row is stamped approved; on decline it is stamped declined. Kept separate
+// from `agencies` so unverified public submissions never touch the trusted set
+// (directory, metrics, counts) — rule 15.
+model AgencyApplication {
+  id           String                  @id @default(uuid()) @db.Uuid
+  agencyName   String                  @map("agency_name")
+  phone        String
+  districts    String[]
+  contactName  String                  @map("contact_name")
+  contactEmail String                  @map("contact_email")
+  note         String?
+  status       AgencyApplicationStatus @default(pending)
+  // Who reviewed it and the agency the approval created — plain ids, not FKs;
+  // the append-only audit_log holds the authoritative decision trail (rule 4).
+  reviewedById    String?   @map("reviewed_by_id") @db.Uuid
+  reviewedAt      DateTime? @map("reviewed_at")
+  createdAgencyId String?   @map("created_agency_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("agency_applications")
 }
 
 model AgencyMember {

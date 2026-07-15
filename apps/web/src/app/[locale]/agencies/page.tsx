@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { Building2, Mail, MessageCircle } from 'lucide-react';
 import { MOGADISHU_DISTRICTS } from '@guri/shared';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { SUPPORT_EMAIL, whatsappHref } from '@/lib/contact';
 import { PublicHeader } from '@/components/public-header';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
@@ -79,6 +81,49 @@ export default function AgencyDirectoryPage() {
             </li>
           ))}
         </ul>
+
+        {/* §2/§15 — agencies are onboarded by the platform team, never
+            self-provisioned (there is no "sign up as an agency"). The primary
+            action submits an application to the admin waiting list; WhatsApp and
+            email stay as direct channels. Approval (createAgency) stays a manual
+            platform-admin step. */}
+        <section className="rounded-card bg-forest p-6 text-mist sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-lg">
+              <h2 className="font-display text-xl font-bold text-mist sm:text-2xl">
+                {t('join.title')}
+              </h2>
+              <p className="mt-1.5 text-sm text-mist/75">{t('join.body')}</p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-none sm:items-stretch">
+              <Link
+                href="/apply"
+                className="flex items-center justify-center gap-2 rounded-full bg-lime px-6 py-3 text-sm font-bold text-forest transition-transform hover:brightness-95 active:scale-[0.98] motion-reduce:transition-none"
+              >
+                <Building2 className="h-4 w-4" aria-hidden />
+                {t('join.apply')}
+              </Link>
+              <div className="flex items-center gap-2.5">
+                <a
+                  href={whatsappHref(t('join.waText'))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full border border-mist/25 px-4 py-2.5 text-sm font-semibold text-mist transition-colors hover:border-mist/50"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden />
+                  {t('join.whatsapp')}
+                </a>
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full border border-mist/25 px-4 py-2.5 text-sm font-semibold text-mist transition-colors hover:border-mist/50"
+                >
+                  <Mail className="h-4 w-4" aria-hidden />
+                  {t('join.email')}
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </>
   );
