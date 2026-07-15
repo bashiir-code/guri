@@ -131,7 +131,10 @@
     "withdrawTitle": "Ma ka noqonaysaa codsigan?",
     "withdrawBody": "Wakaaladdu mar dambe ma arki doonto. Mar dambe ayaad dib u codsan kartaa gurigan.",
     "withdrawConfirm": "Ka noqo codsiga",
-    "keep": "Hay codsiga"
+    "keep": "Hay codsiga",
+    "sectionClosed": "La kiraystay",
+    "sectionEnded": "Ka noqosho & diidmo",
+    "noActive": "Hadda ma jiro codsi socda."
   },
   "dealStates": {
     "requested": "Safka ayuu ku jiraa",

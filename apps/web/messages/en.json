@@ -131,7 +131,10 @@
     "withdrawTitle": "Withdraw this request?",
     "withdrawBody": "The agency will no longer see it. You can request this home again later.",
     "withdrawConfirm": "Withdraw request",
-    "keep": "Keep it"
+    "keep": "Keep it",
+    "sectionClosed": "Rented",
+    "sectionEnded": "Withdrawn & declined",
+    "noActive": "No active requests right now."
   },
   "dealStates": {
     "requested": "In queue",
