@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 interface Overview {
   activeAgencies: number;
   pendingAgencies: number;
+  pendingApplications: number;
   suspendedAgencies: number;
   activeListings: number;
   listingsThisMonth: number;
@@ -51,8 +52,8 @@ export default function AdminOverviewPage() {
     {
       label: t('overview.kpiAgencies'),
       value: String(o.activeAgencies),
-      delta: t('overview.kpiAgenciesDelta', { count: o.pendingAgencies }),
-      deltaClass: o.pendingAgencies > 0 ? 'text-[#8A5A10]' : 'text-slate_brand',
+      delta: t('overview.kpiAgenciesDelta', { count: o.pendingApplications }),
+      deltaClass: o.pendingApplications > 0 ? 'text-[#8A5A10]' : 'text-slate_brand',
     },
     {
       label: t('overview.kpiListings'),
@@ -181,10 +182,10 @@ export default function AdminOverviewPage() {
             </h2>
             <div className="flex items-center gap-3 rounded-[14px] bg-amber_reserved/[0.18] px-3.5 py-3">
               <p className="font-display text-2xl font-extrabold text-forest">
-                {o.pendingAgencies}
+                {o.pendingApplications}
               </p>
               <p className="text-[13px] leading-snug text-slate_brand">
-                {t('overview.pendingBody', { count: o.pendingAgencies })}
+                {t('overview.pendingBody', { count: o.pendingApplications })}
               </p>
             </div>
             <Link

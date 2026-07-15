@@ -210,8 +210,16 @@ export class AdminService {
     const monthStart = startOfMonth(now);
     const chartStart = startOfMonth(new Date(now.getFullYear(), now.getMonth() - 6, 1));
 
-    const [byStatus, activeListings, listingsThisMonth, activeTenancies, rentAgg, recentLeases, published] =
-      await Promise.all([
+    const [
+      byStatus,
+      activeListings,
+      listingsThisMonth,
+      activeTenancies,
+      rentAgg,
+      recentLeases,
+      published,
+      pendingApplications,
+    ] = await Promise.all([
         this.prisma.agency.groupBy({ by: ['status'], _count: { _all: true } }),
         this.prisma.listing.count({
           where: { publishedAt: { not: null }, agency: { status: 'active' } },
@@ -232,6 +240,10 @@ export class AdminService {
           _count: { _all: true },
           orderBy: { _count: { district: 'desc' } },
         }),
+        // The waiting list that actually feeds "pending approvals": public
+        // agency applications awaiting review. Agencies themselves are created
+        // straight to active, so agency.status='pending' is always 0.
+        this.prisma.agencyApplication.count({ where: { status: 'pending' } }),
       ]);
 
     const statusCount = (s: string) => byStatus.find((b) => b.status === s)?._count._all ?? 0;
@@ -254,6 +266,7 @@ export class AdminService {
     return {
       activeAgencies: statusCount('active'),
       pendingAgencies: statusCount('pending'),
+      pendingApplications,
       suspendedAgencies: statusCount('suspended'),
       activeListings,
       listingsThisMonth,
