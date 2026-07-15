@@ -111,6 +111,31 @@ export class AdminService {
     return updated;
   }
 
+  // The audit screen's entry list: newest deals platform-wide, so the admin
+  // can open a trail (e.g. the deal behind a rented house) without hunting
+  // for a UUID. The ID search stays for jumping to a specific one.
+  async recentDeals() {
+    const deals = await this.prisma.deal.findMany({
+      orderBy: { updatedAt: 'desc' },
+      take: 20,
+      include: {
+        listing: {
+          select: { district: true, neighborhood: true, agency: { select: { name: true } } },
+        },
+        customer: { select: { name: true } },
+      },
+    });
+    return deals.map((d) => ({
+      id: d.id,
+      state: d.state,
+      updatedAt: d.updatedAt,
+      agency: d.listing.agency.name,
+      district: d.listing.district,
+      neighborhood: d.listing.neighborhood,
+      customer: d.customer.name,
+    }));
+  }
+
   // §5/§9 Audit view — the fraud-oversight surface. Full deal_events timeline,
   // the customer ID documents (metadata), and the audit_log ACCESS log: who
   // viewed which document, when. Read-only; admin never edits.

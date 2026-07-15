@@ -770,6 +770,9 @@
     "auditView": {
       "title": "Hubinta heshiiska",
       "searchPlaceholder": "Ku dheji ID-ga heshiiska",
+      "recentTitle": "Heshiisyada u dambeeyay",
+      "recentHint": "Riix heshiis si aad u furto raadraaciisa oo dhan — ama kor ku dheji ID.",
+      "recentEmpty": "Weli heshiis ma jiro.",
       "search": "Raadi",
       "notFound": "Heshiis ID-gaas leh ma jiro.",
       "failed": "Lama soo rarin — hubi ID-ga.",

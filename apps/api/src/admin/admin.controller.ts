@@ -45,6 +45,11 @@ export class AdminController {
 export class AdminOversightController {
   constructor(private readonly admin: AdminService) {}
 
+  @Get('deals/recent')
+  recentDeals() {
+    return this.admin.recentDeals();
+  }
+
   @Get('deals/:id/audit')
   dealAudit(@Param('id', ParseUUIDPipe) id: string) {
     return this.admin.dealAudit(id);

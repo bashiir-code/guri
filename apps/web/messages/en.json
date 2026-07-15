@@ -770,6 +770,9 @@
     "auditView": {
       "title": "Deal audit",
       "searchPlaceholder": "Paste a deal ID",
+      "recentTitle": "Recent deals",
+      "recentHint": "Tap a deal to open its full trail — or paste an ID above.",
+      "recentEmpty": "No deals yet.",
       "search": "Search",
       "notFound": "No deal with that ID.",
       "failed": "Could not load — check the ID.",

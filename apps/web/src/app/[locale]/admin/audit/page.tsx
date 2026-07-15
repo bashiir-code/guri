@@ -6,7 +6,17 @@ import { useTranslations } from 'next-intl';
 import { api, ApiError } from '@/lib/api';
 import { formatDateTime } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+interface RecentDeal {
+  id: string;
+  state: string;
+  updatedAt: string;
+  agency: string;
+  district: string;
+  neighborhood: string | null;
+  customer: string | null;
+}
 
 interface AuditView {
   deal: {
@@ -33,6 +43,13 @@ export default function AdminAuditPage() {
     queryFn: () => api(`/admin/deals/${dealId}/audit`),
     enabled: dealId.length > 10,
     retry: false,
+  });
+
+  // Entry list: the newest deals platform-wide, so a trail (e.g. the rented
+  // house) is one tap away — the ID search is only a shortcut.
+  const { data: recent } = useQuery<RecentDeal[]>({
+    queryKey: ['admin-recent-deals'],
+    queryFn: () => api('/admin/deals/recent'),
   });
 
   return (
@@ -66,6 +83,43 @@ export default function AdminAuditPage() {
         <p className="text-sm text-destructive">
           {error instanceof ApiError && error.status === 404 ? t('notFound') : t('failed')}
         </p>
+      )}
+
+      {!data && !isLoading && recent && (
+        <Card className="max-w-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">{t('recentTitle')}</CardTitle>
+            <CardDescription>{t('recentHint')}</CardDescription>
+          </CardHeader>
+          <CardContent className="divide-y p-0 pt-1">
+            {recent.length === 0 && (
+              <p className="px-6 pb-4 text-sm text-muted-foreground">{t('recentEmpty')}</p>
+            )}
+            {recent.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => {
+                  setInput(d.id);
+                  setDealId(d.id);
+                }}
+                className="flex w-full items-center justify-between gap-3 px-6 py-3 text-left text-sm transition-colors hover:bg-muted/50"
+              >
+                <span className="min-w-0">
+                  <span className="font-semibold text-forest">{ts(d.state)}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {d.agency} · {d.district}
+                    {d.neighborhood ? ` · ${d.neighborhood}` : ''}
+                    {d.customer ? ` · ${d.customer}` : ''}
+                  </span>
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {formatDateTime(d.updatedAt)}
+                </span>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       {data && (
