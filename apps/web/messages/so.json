@@ -239,6 +239,7 @@
       "perMonth": "/bishii",
       "bedsShort": "qol",
       "daysToEnd": "{days} maalmood ayaa hadhay",
+      "endedAgo": "Muddadu waxay dhamaatay {days} maalmood ka hor",
       "tenant": "Kiraystaha",
       "statusLabel": "Xaaladda"
     },
@@ -476,6 +477,7 @@
     "title": "Kiraystayaasha",
     "empty": "Weli kiro firfircoon ma jirto — marka hore xir heshiis.",
     "daysToEnd": "{days} maalmood ayaa hadhay",
+    "endedAgo": "Muddadu waxay dhamaatay {days} maalmood ka hor — diiwaangeli natiijada",
     "perMonth": "/bishii",
     "term": "Muddo {months} bilood ah",
     "logPayment": "Diiwaangeli lacag",

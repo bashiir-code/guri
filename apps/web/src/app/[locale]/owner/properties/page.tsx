@@ -111,7 +111,9 @@ export default function OwnerPropertiesPage() {
                     </p>
                     {p.currentLease && (
                       <p className="mt-0.5 text-[11.5px] text-slate_brand">
-                        {t('properties.daysToEnd', { days: p.currentLease.daysToEnd })}
+                        {p.currentLease.daysToEnd < 0
+                          ? t('properties.endedAgo', { days: -p.currentLease.daysToEnd })
+                          : t('properties.daysToEnd', { days: p.currentLease.daysToEnd })}
                       </p>
                     )}
                   </div>

@@ -239,6 +239,7 @@
       "perMonth": "/month",
       "bedsShort": "bd",
       "daysToEnd": "{days} days left",
+      "endedAgo": "Term ended {days, plural, =1 {# day} other {# days}} ago",
       "tenant": "Tenant",
       "statusLabel": "Status"
     },
@@ -476,6 +477,7 @@
     "title": "Tenancies",
     "empty": "No active leases yet — close a deal first.",
     "daysToEnd": "{days} days left",
+    "endedAgo": "Term ended {days, plural, =1 {# day} other {# days}} ago — record the outcome",
     "perMonth": "/month",
     "term": "{months}-month term",
     "logPayment": "Log payment",

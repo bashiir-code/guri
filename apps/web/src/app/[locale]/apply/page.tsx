@@ -68,18 +68,30 @@ export default function ApplyPage() {
         >
           <div className="space-y-2">
             <Label htmlFor="agencyName">{t('agencyName')}</Label>
-            <Input id="agencyName" {...form.register('agencyName')} />
+            <Input
+              id="agencyName"
+              aria-invalid={!!form.formState.errors.agencyName || undefined}
+              {...form.register('agencyName')}
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="phone">{t('phone')}</Label>
-            <Input id="phone" type="tel" placeholder="+2526xxxxxxxx" {...form.register('phone')} />
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="+2526xxxxxxxx"
+              aria-invalid={!!form.formState.errors.phone || undefined}
+              {...form.register('phone')}
+            />
             <p className="text-xs text-muted-foreground">{t('phoneHint')}</p>
           </div>
 
           <div className="space-y-2">
             <Label>{t('districts')}</Label>
-            <div className="grid max-h-44 grid-cols-2 gap-1 overflow-y-auto rounded-xl border p-3">
+            <div
+              className={`grid max-h-44 grid-cols-2 gap-1 overflow-y-auto rounded-xl border p-3 ${form.formState.errors.districts ? 'border-destructive' : ''}`}
+            >
               {MOGADISHU_DISTRICTS.map((d) => (
                 <label key={d} className="flex items-center gap-2 text-sm">
                   <input
@@ -96,7 +108,11 @@ export default function ApplyPage() {
 
           <div className="space-y-2">
             <Label htmlFor="contactName">{t('contactName')}</Label>
-            <Input id="contactName" {...form.register('contactName')} />
+            <Input
+              id="contactName"
+              aria-invalid={!!form.formState.errors.contactName || undefined}
+              {...form.register('contactName')}
+            />
           </div>
 
           <div className="space-y-2">
@@ -105,6 +121,7 @@ export default function ApplyPage() {
               id="contactEmail"
               type="email"
               placeholder="you@example.com"
+              aria-invalid={!!form.formState.errors.contactEmail || undefined}
               {...form.register('contactEmail')}
             />
             <p className="text-xs text-muted-foreground">{t('contactEmailHint')}</p>

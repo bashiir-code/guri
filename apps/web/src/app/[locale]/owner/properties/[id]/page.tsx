@@ -123,7 +123,9 @@ export default function OwnerPropertyDetailPage({
                 </p>
                 <p className="text-muted-foreground">
                   {t('detail.term', { months: p.currentLease.termMonths })} ·{' '}
-                  {t('properties.daysToEnd', { days: p.currentLease.daysToEnd })}
+                  {p.currentLease.daysToEnd < 0
+                    ? t('properties.endedAgo', { days: -p.currentLease.daysToEnd })
+                    : t('properties.daysToEnd', { days: p.currentLease.daysToEnd })}
                 </p>
                 <p className="text-muted-foreground">
                   {t('detail.renewals', { count: p.currentLease.renewalCount })}

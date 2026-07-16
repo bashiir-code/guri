@@ -86,7 +86,7 @@ export default function AdminAgenciesPage() {
           <h1 className="font-display text-[28px] font-extrabold text-forest">{t('agencies')}</h1>
           <p className="mt-1 text-sm text-slate_brand">{t('agenciesSubtitle')}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex max-w-full flex-wrap items-center gap-2.5">
           <div className="w-[200px] md:w-[240px]">
             <Input
               type="search"
@@ -97,7 +97,7 @@ export default function AdminAgenciesPage() {
               className="h-11 rounded-full"
             />
           </div>
-          <div className="hs flex gap-2 overflow-x-auto">
+          <div className="hs flex max-w-full gap-2 overflow-x-auto">
             {filters.map((f) => (
               <button
                 key={f.key}

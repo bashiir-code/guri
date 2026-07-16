@@ -119,7 +119,11 @@ export default function TenanciesPage() {
                   l.daysToEnd <= 30 ? 'bg-amber_reserved/25 text-forest' : 'bg-lime/40 text-forest',
                 )}
               >
-                {t('daysToEnd', { days: l.daysToEnd })}
+                {/* §16 — a lease past its term stays rented until a human
+                    records the outcome; say that instead of "-N days left". */}
+                {l.daysToEnd < 0
+                  ? t('endedAgo', { days: -l.daysToEnd })
+                  : t('daysToEnd', { days: l.daysToEnd })}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
