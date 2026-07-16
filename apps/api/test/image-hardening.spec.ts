@@ -2,7 +2,11 @@ import { describe, expect, it, beforeAll } from 'vitest';
 import sharp from 'sharp';
 import { BadRequestException } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
-import { StorageService, MAX_INPUT_PIXELS } from '../src/storage/storage.service';
+import {
+  StorageService,
+  MAX_INPUT_PIXELS,
+  THUMB_MAX_DIMENSION,
+} from '../src/storage/storage.service';
 
 // The photo pipeline is the pilot's heaviest path. These tests prove that
 // hostile or broken input is rejected as a clean 400 — never a raw throw that
@@ -78,5 +82,23 @@ describe('processPhotoToWebp — valid images still succeed', () => {
     expect(Math.max(meta.width ?? 0, meta.height ?? 0)).toBeLessThanOrEqual(1280);
     // WebP of a downsized image should be far smaller than the source JPEG.
     expect(out.length).toBeLessThan(big.length);
+  });
+
+  it('makes a card thumbnail that is WebP, ≤800px, and lighter than the full image', async () => {
+    const [full, thumb] = await Promise.all([
+      storage.processPhotoToWebp(big),
+      storage.processPhotoToThumbWebp(big),
+    ]);
+    const meta = await sharp(thumb).metadata();
+    expect(meta.format).toBe('webp');
+    expect(Math.max(meta.width ?? 0, meta.height ?? 0)).toBeLessThanOrEqual(THUMB_MAX_DIMENSION);
+    // The whole point: the card cover ships fewer bytes than the full image.
+    expect(thumb.length).toBeLessThan(full.length);
+  });
+
+  it('rejects broken input for the thumbnail path too (clean 400)', async () => {
+    await expect(storage.processPhotoToThumbWebp(Buffer.alloc(0))).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 });

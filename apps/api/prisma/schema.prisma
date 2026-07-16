@@ -271,7 +271,11 @@ model Listing {
   depositUsd    Decimal       @map("deposit_usd") @db.Decimal(10, 2)
   descriptionSo String        @map("description_so")
   descriptionEn String        @map("description_en")
-  photos        String[] // storage keys
+  photos        String[] // storage keys (full-size ≤1280px WebP, gallery use)
+  // Parallel to `photos`: a smaller card-cover derivative per photo, same index.
+  // Append-only like `photos`, so the two never desync. Empty for older photos
+  // uploaded before thumbs existed — cover reads fall back to the full image.
+  photoThumbs   String[]      @map("photo_thumbs") // storage keys (≤800px WebP)
   status        ListingStatus @default(available)
   // Publish gate (phase 1): agency ticks that it inspected the original
   // ownership papers at the owner meetup; publishing requires it.

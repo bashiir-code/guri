@@ -135,22 +135,25 @@ export class ListingsService {
       include: { owner: { include: { user: { select: { name: true, phone: true } } } } },
     });
     return Promise.all(
-      listings.map(async (l) => ({
-        id: l.id,
-        district: l.district,
-        neighborhood: l.neighborhood,
-        type: l.type,
-        bedrooms: l.bedrooms,
-        bathrooms: l.bathrooms,
-        rentUsd: Number(l.rentUsd),
-        status: l.status,
-        publishedAt: l.publishedAt,
-        ownerName: l.owner.user.name,
-        coverUrl: l.photos[0]
-          ? await this.storage.presignGet(l.photos[0], PHOTO_URL_TTL_SECONDS)
-          : null,
-        createdAt: l.createdAt,
-      })),
+      listings.map(async (l) => {
+        const coverKey = l.photoThumbs?.[0] ?? l.photos[0] ?? null;
+        return {
+          id: l.id,
+          district: l.district,
+          neighborhood: l.neighborhood,
+          type: l.type,
+          bedrooms: l.bedrooms,
+          bathrooms: l.bathrooms,
+          rentUsd: Number(l.rentUsd),
+          status: l.status,
+          publishedAt: l.publishedAt,
+          ownerName: l.owner.user.name,
+          coverUrl: coverKey
+            ? await this.storage.presignGet(coverKey, PHOTO_URL_TTL_SECONDS)
+            : null,
+          createdAt: l.createdAt,
+        };
+      }),
     );
   }
 
@@ -209,15 +212,27 @@ export class ListingsService {
       throw new BadRequestException('too_many_photos');
     }
     const keys: string[] = [];
+    const thumbKeys: string[] = [];
     for (const file of files) {
-      const webp = await this.storage.processPhotoToWebp(file.buffer);
-      const key = `photos/${id}/${randomUUID()}.webp`;
-      await this.storage.putObject(key, webp, 'image/webp');
+      const uuid = randomUUID();
+      const [webp, thumb] = await Promise.all([
+        this.storage.processPhotoToWebp(file.buffer),
+        this.storage.processPhotoToThumbWebp(file.buffer),
+      ]);
+      const key = `photos/${id}/${uuid}.webp`;
+      const thumbKey = `photos/${id}/${uuid}.thumb.webp`;
+      await Promise.all([
+        this.storage.putObject(key, webp, 'image/webp'),
+        this.storage.putObject(thumbKey, thumb, 'image/webp'),
+      ]);
       keys.push(key);
+      thumbKeys.push(thumbKey);
     }
+    // photos and photoThumbs are pushed together, same order, every time — so
+    // photos[i] and photoThumbs[i] always refer to the same image.
     await this.prisma.listing.update({
       where: { id },
-      data: { photos: { push: keys } },
+      data: { photos: { push: keys }, photoThumbs: { push: thumbKeys } },
     });
     await this.audit.log({
       actorId,
@@ -311,61 +326,86 @@ export class ListingsService {
         ? { rentUsd: { gte: query.minRent, lte: query.maxRent } }
         : {}),
     };
+    // A stable, unique tiebreaker (id) after the chosen sort key. Without it,
+    // rows sharing a rent (or publish instant) have no deterministic order, so
+    // offset pagination can skip or repeat listings between pages (SPEC §6).
     const orderBy =
       query.sort === 'price_asc'
-        ? ({ rentUsd: 'asc' } as const)
+        ? [{ rentUsd: 'asc' as const }, { id: 'asc' as const }]
         : query.sort === 'price_desc'
-          ? ({ rentUsd: 'desc' } as const)
-          : ({ publishedAt: 'desc' } as const);
+          ? [{ rentUsd: 'desc' as const }, { id: 'asc' as const }]
+          : [{ publishedAt: 'desc' as const }, { id: 'asc' as const }];
 
-    const [total, rows, aggregates] = await this.prisma.$transaction([
-      this.prisma.listing.count({ where }),
-      this.prisma.listing.findMany({
-        where,
-        orderBy,
-        skip: (query.page - 1) * BROWSE_PAGE_SIZE,
-        take: BROWSE_PAGE_SIZE,
-        // Customers deal with the accountable agency, never the owner (§2) —
-        // the verified-agency badge on every card is the core promise (§6).
-        include: { agency: { select: { name: true } } },
-      }),
-      // Slider bounds for the UI: the max rent / bedrooms across everything
-      // currently browsable (unfiltered), so the range always fits the market.
-      this.prisma.listing.aggregate({
-        where: this.publicWhere(),
-        _max: { rentUsd: true, bedrooms: true },
-      }),
-    ]);
+    // Fetch one extra row: if it comes back, there's a next page — so paging
+    // never needs a full count(), which is the pricier query on a big table.
+    const findPage = this.prisma.listing.findMany({
+      where,
+      orderBy,
+      skip: (query.page - 1) * BROWSE_PAGE_SIZE,
+      take: BROWSE_PAGE_SIZE + 1,
+      // Customers deal with the accountable agency, never the owner (§2) —
+      // the verified-agency badge on every card is the core promise (§6).
+      include: { agency: { select: { name: true } } },
+    });
 
-    const rawMaxRent = Number(aggregates._max.rentUsd ?? 0);
-    const bounds = {
-      // rounded up to a friendly step; sensible floors for a sparse market
-      maxRent: Math.max(Math.ceil(rawMaxRent / 50) * 50, 100),
-      maxBedrooms: Math.max(aggregates._max.bedrooms ?? 0, 5),
-    };
+    // total (the "N homes" figure) and the slider bounds are read only from the
+    // first page by the UI, so later pages skip the count + aggregate entirely.
+    let total: number | null = null;
+    let bounds: { maxRent: number; maxBedrooms: number } | null = null;
+    let rows;
+    if (query.page === 1) {
+      const [count, firstPage, aggregates] = await this.prisma.$transaction([
+        this.prisma.listing.count({ where }),
+        findPage,
+        // Max rent / bedrooms across everything currently browsable (unfiltered),
+        // so the slider range always fits the market.
+        this.prisma.listing.aggregate({
+          where: this.publicWhere(),
+          _max: { rentUsd: true, bedrooms: true },
+        }),
+      ]);
+      total = count;
+      rows = firstPage;
+      const rawMaxRent = Number(aggregates._max.rentUsd ?? 0);
+      bounds = {
+        // rounded up to a friendly step; sensible floors for a sparse market
+        maxRent: Math.max(Math.ceil(rawMaxRent / 50) * 50, 100),
+        maxBedrooms: Math.max(aggregates._max.bedrooms ?? 0, 5),
+      };
+    } else {
+      rows = await findPage;
+    }
+
+    const hasMore = rows.length > BROWSE_PAGE_SIZE;
+    const pageRows = hasMore ? rows.slice(0, BROWSE_PAGE_SIZE) : rows;
 
     const items = await Promise.all(
-      rows.map(async (l) => ({
-        id: l.id,
-        district: l.district,
-        neighborhood: l.neighborhood,
-        type: l.type,
-        bedrooms: l.bedrooms,
-        bathrooms: l.bathrooms,
-        rentUsd: Number(l.rentUsd),
-        status: l.status,
-        agencyName: l.agency.name,
-        coverUrl: l.photos[0]
-          ? await this.storage.presignGet(l.photos[0], PHOTO_URL_TTL_SECONDS)
-          : null,
-      })),
+      pageRows.map(async (l) => {
+        // Card cover: the small thumb, falling back to the full image for photos
+        // uploaded before thumbs existed (their photoThumbs is empty or null).
+        const coverKey = l.photoThumbs?.[0] ?? l.photos[0] ?? null;
+        return {
+          id: l.id,
+          district: l.district,
+          neighborhood: l.neighborhood,
+          type: l.type,
+          bedrooms: l.bedrooms,
+          bathrooms: l.bathrooms,
+          rentUsd: Number(l.rentUsd),
+          status: l.status,
+          agencyName: l.agency.name,
+          coverUrl: coverKey
+            ? await this.storage.presignGet(coverKey, PHOTO_URL_TTL_SECONDS)
+            : null,
+        };
+      }),
     );
     return {
       items,
       page: query.page,
       pageSize: BROWSE_PAGE_SIZE,
       total,
-      hasMore: query.page * BROWSE_PAGE_SIZE < total,
+      hasMore,
       bounds,
     };
   }

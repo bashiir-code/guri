@@ -36,8 +36,10 @@ interface BrowsePage {
   items: BrowseItem[];
   page: number;
   hasMore: boolean;
-  total: number;
-  bounds: BrowseBounds;
+  // total and bounds are only computed for the first page (the UI reads them
+  // from there); subsequent pages return null to skip a needless count.
+  total: number | null;
+  bounds: BrowseBounds | null;
 }
 
 function queryString(f: BrowseFilters, q: string, page: number) {

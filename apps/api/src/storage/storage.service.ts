@@ -21,6 +21,11 @@ export const DOCUMENT_URL_TTL_SECONDS = 5 * 60; // short-lived per §9
 // rejects abuse well before it hurts. (§9 hardening)
 export const MAX_INPUT_PIXELS = 50_000_000;
 
+// Card-cover derivative size. Cards render at roughly 350–450px CSS; 800px keeps
+// them crisp on 2× phones while shipping a fraction of the full ≤1280px bytes —
+// the single biggest browse-page saving on a slow connection.
+export const THUMB_MAX_DIMENSION = 800;
+
 @Injectable()
 export class StorageService {
   private readonly client: S3Client;
@@ -115,6 +120,27 @@ export class StorageService {
         .rotate() // honor EXIF orientation
         .resize({ width: 1280, height: 1280, fit: 'inside', withoutEnlargement: true })
         .webp({ quality: 80 })
+        .toBuffer();
+    } catch {
+      throw new BadRequestException('invalid_image');
+    }
+  }
+
+  // A smaller card-cover derivative of a photo (≤800px WebP), generated at
+  // upload beside the full image. Same §9 hardening as processPhotoToWebp: any
+  // input sharp can't decode becomes a clean 400, never a raw throw.
+  async processPhotoToThumbWebp(input: Buffer): Promise<Buffer> {
+    if (!input || input.length === 0) throw new BadRequestException('invalid_image');
+    try {
+      return await sharp(input, { limitInputPixels: MAX_INPUT_PIXELS, failOn: 'error' })
+        .rotate()
+        .resize({
+          width: THUMB_MAX_DIMENSION,
+          height: THUMB_MAX_DIMENSION,
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .webp({ quality: 72 })
         .toBuffer();
     } catch {
       throw new BadRequestException('invalid_image');

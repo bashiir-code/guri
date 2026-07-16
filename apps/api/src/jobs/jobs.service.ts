@@ -284,7 +284,7 @@ export class JobsService {
   // §8 weekly orphan-file sweep: delete bucket objects no DB row references.
   async cleanupOrphanFiles(): Promise<number> {
     const [listings, ownerDocs, custDocs, agreements, intakes] = await Promise.all([
-      this.prisma.listing.findMany({ select: { photos: true } }),
+      this.prisma.listing.findMany({ select: { photos: true, photoThumbs: true } }),
       this.prisma.ownerDocument.findMany({ select: { fileKey: true } }),
       this.prisma.customerDocument.findMany({ select: { fileKey: true } }),
       this.prisma.agreement.findMany({ select: { pdfKey: true, signedScanKey: true } }),
@@ -293,7 +293,12 @@ export class JobsService {
       this.prisma.intake.findMany({ select: { photos: true, docs: true } }),
     ]);
     const referenced = new Set<string>();
-    listings.forEach((l) => l.photos.forEach((k) => referenced.add(k)));
+    listings.forEach((l) => {
+      l.photos.forEach((k) => referenced.add(k));
+      // Thumb derivatives live under the same photos/ prefix; without this the
+      // weekly sweep would delete every card thumbnail as an orphan.
+      l.photoThumbs.forEach((k) => referenced.add(k));
+    });
     ownerDocs.forEach((d) => referenced.add(d.fileKey));
     custDocs.forEach((d) => referenced.add(d.fileKey));
     agreements.forEach((a) => {
