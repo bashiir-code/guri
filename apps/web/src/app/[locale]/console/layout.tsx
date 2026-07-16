@@ -182,7 +182,10 @@ export default function ConsoleLayout({ children }: { children: ReactNode }) {
             onClick={() => setDrawerOpen(false)}
             className="animate-fade-in absolute inset-0 bg-forest/50"
           />
-          <aside className="animate-drawer-in absolute inset-y-0 left-0 flex w-[290px] flex-col bg-forest px-4 py-6">
+          {/* overflow-y-auto: on short phone viewports the drawer content
+              (nav + role switch + footer) is taller than the screen; without
+              a scroll container the sign-out footer is clipped off-screen. */}
+          <aside className="animate-drawer-in absolute inset-y-0 left-0 flex w-[290px] flex-col overflow-y-auto bg-forest px-4 py-6">
             <div className="flex items-start justify-between">
               <SidebarBrand t={t} showLabels />
               <button
