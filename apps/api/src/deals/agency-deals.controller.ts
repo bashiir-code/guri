@@ -104,6 +104,13 @@ export class AgencyDealsController {
     return this.deals.dashboard(ctx);
   }
 
+  // Customer viewing-request inbox across the agency (§5) — distinct from the
+  // owner-intake leads inbox served by IntakesService.
+  @Get('agency/requests')
+  requests(@AgencyCtx() ctx: AgencyContext) {
+    return this.deals.agencyRequests(ctx);
+  }
+
   @Post('deals/:id/select')
   select(
     @Req() req: AuthenticatedRequest,

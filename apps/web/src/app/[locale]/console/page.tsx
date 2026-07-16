@@ -126,7 +126,7 @@ export default function ConsoleDashboard() {
         <div className="animate-rise-in flex min-w-0 flex-col gap-4 rounded-card bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-[17px] font-bold text-forest">{t('newLeadsTitle')}</h2>
-            <Link href="/console/leads" className="text-[13px] font-semibold text-slate_brand hover:text-forest">
+            <Link href="/console/requests" className="text-[13px] font-semibold text-slate_brand hover:text-forest">
               {t('viewAll')} →
             </Link>
           </div>

@@ -341,6 +341,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "listings": "Listings",
+      "requests": "Requests",
       "leads": "Leads",
       "tenancies": "Tenancies",
       "owners": "Owners",
@@ -520,6 +521,13 @@
       "docs_in_review": "In review",
       "approved": "Approved"
     }
+  },
+  "requests": {
+    "title": "Viewing requests",
+    "subtitle": "Customers who asked to see one of your homes.",
+    "empty": "No viewing requests yet.",
+    "viewingAt": "Viewing {when}",
+    "requestedAgo": "Requested {ago}"
   },
   "queue": {
     "title": "Requests",

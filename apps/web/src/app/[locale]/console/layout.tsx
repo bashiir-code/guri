@@ -5,6 +5,7 @@ import { useClerk } from '@clerk/nextjs';
 import { useQuery } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 import {
+  CalendarClock,
   ChevronRight,
   Home,
   Inbox,
@@ -39,13 +40,16 @@ export default function ConsoleLayout({ children }: { children: ReactNode }) {
   const [railExpanded, setRailExpanded] = useState(false);
 
   const isStaff = (me?.roles.agencyMemberships.length ?? 0) > 0;
-  // Leads badge = unanswered requests (§5). Only fetched for staff.
-  const { data: dash } = useQuery<{ unansweredRequests: number }>({
+  // Two separate inboxes, two separate badges (§5/§15). Requests = customers
+  // asking to view a home; Leads = owners asking to have their home listed.
+  // Only fetched for staff.
+  const { data: dash } = useQuery<{ unansweredRequests: number; newIntakes: number }>({
     queryKey: ['dashboard'],
     queryFn: () => api('/agency/dashboard'),
     enabled: isStaff,
   });
-  const leadBadge = dash?.unansweredRequests ?? 0;
+  const requestBadge = dash?.unansweredRequests ?? 0;
+  const leadBadge = dash?.newIntakes ?? 0;
 
   if (isLoading) return <p className="p-8 text-muted-foreground">{t('loading')}</p>;
   if (!me || !isStaff) {
@@ -65,6 +69,7 @@ export default function ConsoleLayout({ children }: { children: ReactNode }) {
   const nav = [
     { href: '/console', label: t('nav.dashboard'), icon: LayoutGrid, exact: true, badge: 0 },
     { href: '/console/listings', label: t('nav.listings'), icon: Home, badge: 0 },
+    { href: '/console/requests', label: t('nav.requests'), icon: CalendarClock, badge: requestBadge },
     { href: '/console/leads', label: t('nav.leads'), icon: Inbox, badge: leadBadge },
     { href: '/console/tenancies', label: t('nav.tenancies'), icon: KeyRound, badge: 0 },
     { href: '/console/owners', label: t('nav.owners'), icon: UserRound, badge: 0 },

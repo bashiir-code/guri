@@ -167,6 +167,49 @@ export class DealsService {
     };
   }
 
+  // GET /agency/requests — the customer viewing-request inbox across the whole
+  // agency (rule 3). These are DEALS in the pre-close pipeline (§4): a customer
+  // asked to see a home. Distinct from the owner-intake leads inbox (§15).
+  // Read-only; scheduling/declining still happens on the deal itself.
+  async agencyRequests(ctx: AgencyContext) {
+    const pipeline: DealState[] = [
+      'requested',
+      'viewing_scheduled',
+      'awaiting_docs',
+      'docs_in_review',
+      'approved',
+    ];
+    const deals = await this.prisma.deal.findMany({
+      where: { listing: { agencyId: ctx.agencyId }, state: { in: pipeline } },
+      include: {
+        customer: { select: { name: true, phone: true } },
+        listing: { select: { id: true, district: true, neighborhood: true, rentUsd: true } },
+      },
+    });
+    // Newest, most-urgent stage first: unanswered requests bubble to the top,
+    // and within a stage the longest-waiting customer leads.
+    const priority = (s: DealState) => pipeline.indexOf(s);
+    deals.sort(
+      (a, b) =>
+        priority(a.state) - priority(b.state) ||
+        a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+    return deals.map((d) => ({
+      dealId: d.id,
+      state: d.state,
+      name: d.customer.name ?? d.customer.phone ?? 'Guest',
+      phone: d.customer.phone,
+      requestedAt: d.createdAt,
+      viewingAt: d.viewingAt,
+      listing: {
+        id: d.listing.id,
+        district: d.listing.district,
+        neighborhood: d.listing.neighborhood,
+        rentUsd: Number(d.listing.rentUsd),
+      },
+    }));
+  }
+
   // §5 agency dashboard: today's viewings, unanswered requests, deals waiting
   // on documents, listings by status — plus the Agency Console design's
   // stat cards (active listings / new leads / viewings this week / rent this
@@ -195,6 +238,7 @@ export class DealsService {
     const [
       todaysViewings,
       unansweredRequests,
+      newIntakes,
       awaitingDocs,
       listings,
       viewingsThisWeek,
@@ -214,6 +258,10 @@ export class DealsService {
         },
       }),
       this.prisma.deal.count({ where: { ...agencyListing, state: 'requested' } }),
+      // Owner intakes still awaiting a first response (§15) — the Leads badge.
+      // A separate count from customer viewing requests above; the two inboxes
+      // must never share a badge.
+      this.prisma.intake.count({ where: { agencyId: ctx.agencyId, status: 'submitted' } }),
       this.prisma.deal.count({ where: { ...agencyListing, state: 'awaiting_docs' } }),
       this.prisma.listing.findMany({
         where: { agencyId: ctx.agencyId },
@@ -255,6 +303,7 @@ export class DealsService {
         listing: d.listing,
       })),
       unansweredRequests,
+      newIntakes,
       awaitingDocs,
       listingsByStatus: byStatus,
       stats: {

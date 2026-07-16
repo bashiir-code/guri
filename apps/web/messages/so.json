@@ -341,6 +341,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "listings": "Guryaha",
+      "requests": "Codsiyada",
       "leads": "Hordhacyo",
       "tenancies": "Kiraystayaasha",
       "owners": "Mulkiilayaasha",
@@ -520,6 +521,13 @@
       "docs_in_review": "Dib u eegis",
       "approved": "La ansixiyay"
     }
+  },
+  "requests": {
+    "title": "Codsiyada daawashada",
+    "subtitle": "Macaamiisha codsaday inay arkaan mid ka mid ah guryahaaga.",
+    "empty": "Weli ma jiraan codsiyo daawasho.",
+    "viewingAt": "Daawasho {when}",
+    "requestedAgo": "La codsaday {ago}"
   },
   "queue": {
     "title": "Codsiyada",
