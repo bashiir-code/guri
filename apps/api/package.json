@@ -9,6 +9,7 @@
     "db:migrate": "dotenv -e ../../.env -- prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
+    "backfill:thumbs": "node scripts/backfill-thumbs.mjs",
     "admin:promote": "node --env-file=../../.env scripts/promote-admin.mjs",
     "db:seed-test": "node --env-file=../../.env scripts/seed-testdata.mjs",
     "test": "vitest run"
