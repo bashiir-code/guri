@@ -522,7 +522,7 @@
       "approved": "Approved"
     }
   },
-  "requests": {
+  "consoleRequests": {
     "title": "Viewing requests",
     "subtitle": "Customers who asked to see one of your homes.",
     "empty": "No viewing requests yet.",

@@ -33,7 +33,7 @@ const stageChip: Record<Stage, string> = {
 // Distinct from the owner-intake leads inbox at /console/leads (§15). Each row
 // opens the deal, where scheduling and declining already live.
 export default function RequestsPage() {
-  const t = useTranslations('requests');
+  const t = useTranslations('consoleRequests');
   const ts = useTranslations('dashboard.stage');
   const locale = useLocale();
   const { data: requests, isLoading } = useQuery<AgencyRequest[]>({

@@ -522,7 +522,7 @@
       "approved": "La ansixiyay"
     }
   },
-  "requests": {
+  "consoleRequests": {
     "title": "Codsiyada daawashada",
     "subtitle": "Macaamiisha codsaday inay arkaan mid ka mid ah guryahaaga.",
     "empty": "Weli ma jiraan codsiyo daawasho.",
