@@ -483,8 +483,6 @@ Self-deactivation via `POST /me/leave`, blocked while any live lease exists, per
 
 Admin agencies screen: the suspend action already exists — confirm it fully takes effect and add a reactivate control. Agency staff screen: add a *remove* (deactivate) control per worker alongside the existing `can_verify` toggle, with the last-admin guard-rail surfaced as a disabled state + hint. No new screens.
 
-### Build impact
-
 ---
 
 ## 18. Agency onboarding — public application (added in v1.12)
