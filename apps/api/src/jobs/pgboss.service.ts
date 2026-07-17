@@ -57,6 +57,10 @@ export class PgBossService implements OnModuleInit, OnModuleDestroy {
 
   async send(queue: string): Promise<void> {
     if (!this.boss) return;
-    await this.boss.send(queue, {}, { retryLimit: 2, retryDelay: 60 });
+    // singletonSeconds: every container's @Cron fires in the same minute, so
+    // concurrent sends collapse into ONE job per queue per 60s window — N API
+    // containers can never enqueue N duplicate ticks. A later window always
+    // enqueues fresh, so a slow job never suppresses the next cadence.
+    await this.boss.send(queue, {}, { retryLimit: 2, retryDelay: 60, singletonSeconds: 60 });
   }
 }
