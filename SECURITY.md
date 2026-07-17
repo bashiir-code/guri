@@ -38,7 +38,7 @@ URLs. Access always goes through an explicit issuance:
 ## 4. Object-level authorization on every route
 
 Every controller is guarded by `ClerkAuthGuard` plus the appropriate scoping
-guard, **except** three intentional public routes (asserted by an allowlist in
+guard, **except** five intentional public surfaces (asserted by an allowlist in
 the test — anything new that skips auth fails the build):
 
 | Controller | Base path | Guards | Scope |
@@ -53,9 +53,14 @@ the test — anything new that skips auth fails the build):
 | `owners.controller` | `/owners` | ClerkAuthGuard + **AgencyGuard** + `@AgencyRoles('agent')` | own agency |
 | `staff.controller` | `/agency/staff` | ClerkAuthGuard + **AgencyGuard** + `@AgencyRoles('admin')` | own agency, admin only |
 | `owner.controller` | `/owner` | ClerkAuthGuard + **OwnerGuard** | own properties |
+| `owner-intakes.controller` | `/intakes`, `/my/intakes` | ClerkAuthGuard | self (submitter) |
+| `agency-intakes.controller` | `/agency/intakes`, `/intakes/:id/*` (agency actions) | ClerkAuthGuard + **AgencyGuard** | own agency |
 | `admin.controller` | `/admin/*` | ClerkAuthGuard + **PlatformAdminGuard** | env allowlist |
+| `admin-agency-applications.controller` | `/admin/agency-applications` | ClerkAuthGuard + **PlatformAdminGuard** | env allowlist |
 | `health.controller` | `/health` | — (public) | no data; monitoring only |
 | `public-listings.controller` | `GET /listings`, `/listings/:id` | — (public) | published available/reserved only |
+| `public-agencies.controller` | `GET /agencies` | — (public) | active agencies only (§15 directory) |
+| `public-agency-applications.controller` | `POST /agency-applications` | — (public, throttled) | write-only lead; grants no access, exposes no data |
 | `webhooks/clerk` | `/webhooks/clerk` | — (Svix-signed) | signature-verified machine traffic |
 
 Verification is a `can_verify` permission on `agency_members`, checked by the
@@ -70,11 +75,11 @@ Global default 300 req/min. Tightened per-endpoint via `RATE_LIMITS`
 
 | Endpoint(s) | Limit / min | Why |
 |---|---|---|
-| doc-URL issuance, agreement, owner-doc URL | 20 | presign + audit write each call |
-| uploads (photos, ID, owner docs) | 30 | sharp re-encode is CPU-heavy |
-| request creation | 15 | queue-spam guard |
+| doc-URL issuance, agreement, owner-doc URL, intake-doc URL | 20 | presign + audit write each call |
+| uploads (photos, ID, owner docs, intake photos) | 30 | sharp re-encode is CPU-heavy |
+| request creation, intake submission, agency applications | 15 | queue-spam guard |
 | `/me/leave` | 5 | rare + destructive |
-| public browse | 120 (per IP) | human scroll ok, scraper slowed |
+| public browse, `GET /agencies` directory | 120 (per IP) | human scroll ok, scraper slowed |
 
 The Clerk webhook and `/health` are `@SkipThrottle()` (machine traffic).
 
@@ -88,7 +93,8 @@ old dead-deal docs are removed; closed-deal and recent docs are untouched.
 
 ## 7. Transport & data
 
-HTTPS only in prod (Vercel + Railway terminate TLS). No third-party analytics
+HTTPS only in prod (Railway terminates TLS; Cloudflare proxies in **Full**
+SSL mode in front — see `LAUNCH.md` §3). No third-party analytics
 that ship PII. Structured `pino` logs redact credentials, PINs, tokens, and live
 presigned URLs before anything is written (`apps/api/src/common/logger.ts`,
 proven in `logging-redaction.spec.ts`).

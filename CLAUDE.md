@@ -107,9 +107,14 @@ reserved status. Pill buttons, 20px card radius, hairline borders, no gradients.
 customer app is photo-first; the four role consoles are denser work tools with one
 Lime action each.
 
-## First task (phase 0)
+## Current state (as of 2026-07-17)
 
-Build the phase-0 skeleton only (monorepo, Prisma schema for all SPEC §3 tables,
-Docker Compose Postgres, Clerk auth with Google + email sign-in and the
-`/webhooks/clerk` user-sync into the local `users` table, `pnpm dev` running).
-No screens or business logic yet. Then stop and show the folder tree.
+All build phases (§12, 0–10) are shipped, including phase 10 (owner intake) and
+the §18 agency-application flow. Production runs entirely on **Railway**
+(web + api + Postgres; files on Cloudflare R2) at getguri.com — push to `main`
+runs CI, and Railway's "Wait for CI" auto-deploys green builds. The pilot is in
+launch prep: see `LAUNCH.md` for the go/no-go checklist (SMS gateway is the one
+pending external dependency) and `OPERATIONS.md` for backups, restore, and the
+scaling ledger. Work now is review-driven polish, pilot support, and whatever
+the go/no-go surfaces — the non-negotiable rules above still govern every
+change.

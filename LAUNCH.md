@@ -170,7 +170,8 @@ Set these in each host's dashboard (never commit real values). Names match
 
 **Rollback plan**
 - [ ] Previous Railway deploy pinned on **both** services; DB restore procedure
-      (README) rehearsed; Railway one-click redeploy of the prior build confirmed.
+      (OPERATIONS.md) rehearsed; Railway one-click redeploy of the prior build
+      confirmed.
 
 ---
 

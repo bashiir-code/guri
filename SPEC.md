@@ -1,6 +1,6 @@
 # Rental platform MVP — build spec (Mogadishu pilot)
 
-**Version 1.11 · July 2026** (v1.1 owner intake §15 · v1.2 verifier separation → phase 2 · v1.3 pinned stack §11 · v1.4 deployment checklist · v1.5 lease lifecycle §16 · v1.6 build order reframed as phases · v1.7 strict ID capture, flexible owner-document area, verify as a `can_verify` permission · v1.8 → superseded · v1.9 auth is Clerk with Google-first login; phone is unverified contact data; no SMS on any auth path · v1.10 one sign-in for all roles, roles resolved server-side §2 · v1.11 deactivation & access revocation §17)
+**Version 1.12 · July 2026** (v1.1 owner intake §15 · v1.2 verifier separation → phase 2 · v1.3 pinned stack §11 · v1.4 deployment checklist · v1.5 lease lifecycle §16 · v1.6 build order reframed as phases · v1.7 strict ID capture, flexible owner-document area, verify as a `can_verify` permission · v1.8 → superseded · v1.9 auth is Clerk with Google-first login; phone is unverified contact data; no SMS on any auth path · v1.10 one sign-in for all roles, roles resolved server-side §2 · v1.11 deactivation & access revocation §17 · v1.12 agency onboarding via public application §18)
 Mobile-first web app (PWA) · Somali + English UI · All amounts in USD · Launch market: Mogadishu (Banaadir)
 
 ---
@@ -38,6 +38,8 @@ One user account can hold several roles (common in small agencies). A one-person
 | Platform admin | Seeded from an environment allowlist — never self-serve | Admin tool |
 
 A user with two or more roles (e.g. a landlord who also rents, or an agency head who browses) gets a **role switcher** in the header — never a second account, which would fracture `audit_log.actor_id` across two identities for the same human. Note that head and agent share one console: admin-only sections are permission-gated, not a separate app.
+
+How an agency gets onto the platform in the first place — a public application reviewed by the platform admin, never self-provisioning — is specified in §18.
 
 ---
 
@@ -163,15 +165,15 @@ Mobile-first throughout (≈380 px design width). The agency console must also b
 
 ### Platform admin (3 screens)
 
-1. **Agencies** — approve/create agency and its first admin user; suspend.
-2. **Audit** — search any deal → full timeline, documents, decisions, and the access log.
-3. **Metrics** — listings by status, deal funnel (requested → viewed → closed), median days-to-rent, per agency.
+1. **Agencies** — the §18 application waiting list (approve & set up / decline) at the top; approve/create agency and its first admin user; suspend/reactivate.
+2. **Audit** — a recent-deals entry list plus search any deal by id → full timeline, documents, decisions, and the access log.
+3. **Metrics** — listings by status, deal funnel (requested → viewed → closed), median days-to-rent, per agency; pending §18 applications counted in the overview.
 
 ---
 
 ## 6. API surface
 
-REST, JSON, bearer token = Clerk session JWT. A guard verifies the JWT and resolves it to the local `users` row. Every agency-scoped endpoint enforces `agency_id` ownership. ~33 endpoints total.
+REST, JSON, bearer token = Clerk session JWT. A guard verifies the JWT and resolves it to the local `users` row. Every agency-scoped endpoint enforces `agency_id` ownership. ~45 endpoints total across this section, §15, and §18.
 
 **Auth & profile**
 ```
@@ -222,9 +224,12 @@ GET /owner/dashboard · GET /owner/properties · GET /owner/properties/{id} · G
 **Platform admin**
 ```
 POST /admin/agencies · PATCH /admin/agencies/{id}     approve, suspend, reactivate (never delete — §17)
+GET  /admin/deals/recent                              audit entry list (20 newest deals platform-wide)
 GET  /admin/deals/{id}/audit                          timeline + docs + access log
 GET  /admin/metrics
 ```
+
+Agency-application endpoints (public submit + admin review) live in §18.
 
 Implementation notes: all deal transitions go through one state-machine module that validates the transition table in §4, writes `deal_events`, recomputes listing status, and enqueues notifications — no endpoint mutates `deals.state` directly. Document files are served only through short-lived signed URLs issued after a role check, and every issue of a URL writes to `audit_log`.
 
@@ -292,7 +297,7 @@ TypeScript end to end, in one monorepo (pnpm workspaces): `apps/web` (Next.js), 
 - **PDF:** `@react-pdf/renderer` for the bilingual agreement (no headless Chrome in production).
 - **Notifications:** provider-adapter interface; pilot with a local SMS aggregator (e.g. Hormuud enterprise SMS) · `wa.me` deep links cost nothing.
 - **Quality/ops:** Sentry · `pino` logs · Vitest + a few Playwright happy paths · GitHub Actions CI · Docker everywhere.
-- **Hosting:** web on Vercel; API + Postgres + worker on Railway (EU region — lowest practical latency to Mogadishu); Cloudflare CDN in front of R2. Standard containers + Postgres + S3 API means migrating to a VPS with Docker Compose later is trivial.
+- **Hosting:** web + API + Postgres + worker all on Railway (EU region — lowest practical latency to Mogadishu; one project, three services); Cloudflare CDN in front of R2. Standard containers + Postgres + S3 API means migrating to a VPS with Docker Compose later is trivial.
 
 Deliberately not used: MongoDB (the domain is relational), microservices, Kubernetes, GraphQL, serverless-only APIs.
 
@@ -479,5 +484,40 @@ Self-deactivation via `POST /me/leave`, blocked while any live lease exists, per
 Admin agencies screen: the suspend action already exists — confirm it fully takes effect and add a reactivate control. Agency staff screen: add a *remove* (deactivate) control per worker alongside the existing `can_verify` toggle, with the last-admin guard-rail surfaced as a disabled state + hint. No new screens.
 
 ### Build impact
+
+---
+
+## 18. Agency onboarding — public application (added in v1.12)
+
+How an agency joins the platform. §2's rule stands unchanged — **there is no "sign up as an agency"**; roles are never self-declared. What exists instead is a lead-and-review flow, the agency-side mirror of §15's owner intake: a prospective agency applies publicly, and the platform admin reviews a waiting list and provisions the real agency manually.
+
+**Why:** agencies were previously created only by the platform admin (created straight to `active`), so the admin's pending queue had no inflow and a prospective agency had no route in besides word of mouth. The public directory (§15) now carries a *"Run an agency? Get verified on Guri"* card with three channels: an **Apply** form, WhatsApp, and email.
+
+**Flow**
+
+| Step | Actor | What happens |
+|---|---|---|
+| Apply | Anyone (public, no login) | `POST /agency-applications` — agency name, phone, districts served, contact name + email, optional note. Creates an `agency_applications` row in `pending`. Grants **nothing**: no account, no role, no visibility. Throttled like other public submissions. |
+| Review | Platform admin | The waiting list on the admin agencies screen (and a count on the metrics overview). |
+| Approve | Platform admin | Runs the same `createAgency` path as manual onboarding: real `agencies` row (`active`) + first admin member (`can_verify`), keyed by the applicant's contact email so their Clerk sign-in links to it (§2 role resolution). Application stamped `approved` with the created agency id. |
+| Decline | Platform admin | Application stamped `declined`. Nothing else changes. |
+
+**Rules**
+
+- An application is a lead, not an identity: the `agency_applications` table is deliberately separate from `agencies`, so unreviewed public input never touches the trusted set (directory, metrics, counts).
+- Both decisions are written to `audit_log` (`agency_application.approved` / `.declined`) with the acting admin.
+- Approval reuses the one tested provisioning path — no forked agency-creation logic.
+- An application can be reviewed once: approve/decline on an already-reviewed row is rejected.
+
+**Endpoints**
+
+```
+POST /agency-applications                       public, throttled (15/min per IP)
+GET  /admin/agency-applications                 pending waiting list (platform admin)
+POST /admin/agency-applications/{id}/approve    → creates the agency; returns its id
+POST /admin/agency-applications/{id}/decline
+```
+
+**Screens** — Public: `/apply` form + the directory CTA card (§15). Admin: waiting list embedded at the top of the agencies screen; pending count on the metrics overview.
 
 A small cross-cutting phase (call it phase 8.5, before phase 11): mostly verifying suspend's full effect and adding the worker-deactivate action + guard-rails. Schema already supports it (`agencies.status`, `agency_members.active`, `users.active`) — no migration. It touches guard/endpoint logic, so it is not a pure-visual pass.
