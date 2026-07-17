@@ -35,9 +35,27 @@ export function NotificationBell({ locale }: { locale: string }) {
     refetchInterval: 60_000,
   });
 
+  // Optimistic badge clear: on 3G the two round-trips (mutate, then refetch)
+  // left the unread count visibly stale after opening the panel. Zero it in
+  // the cache immediately and roll back to the snapshot if the server says
+  // no — mark-read is cosmetic state, not deal/audit state, so a brief
+  // optimistic value is safe (unlike state-machine transitions, which must
+  // never render before the server confirms). Items keep their unread
+  // highlight until the settled refetch returns server truth.
   const markRead = useMutation({
     mutationFn: () => api('/me/notifications/read', { method: 'POST', body: {} }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['notifications'] }),
+    onMutate: async () => {
+      // Stop the 60s poll (or any in-flight refetch) from clobbering the
+      // optimistic write with a stale response.
+      await qc.cancelQueries({ queryKey: ['notifications'] });
+      const previous = qc.getQueryData<BellData>(['notifications']);
+      qc.setQueryData<BellData>(['notifications'], (old) => (old ? { ...old, unread: 0 } : old));
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(['notifications'], context.previous);
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
   if (!isSignedIn) return null;
