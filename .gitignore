@@ -30,3 +30,6 @@ ds-bundle/
 .design-sync/node_modules
 apps/web/.ds-css/
 apps/web/.ds-fonts/
+
+# local Claude Code permissions (machine-specific)
+.claude/settings.local.json

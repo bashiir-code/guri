@@ -204,7 +204,7 @@ const Stats: React.FC = () => {
       </div>
       <Rise delay={70} style={{ position: 'absolute', left: 120, bottom: 70 }}>
         <div style={{ fontFamily: mono, fontSize: 26, color: MUTED }}>
-          live at <span style={{ color: LIME }}>getguri.com</span> · pnpm monorepo · CI-gated deploys on Railway
+          ran in <span style={{ color: LIME }}>production</span> · pnpm monorepo · CI-gated deploys
         </div>
       </Rise>
     </AbsoluteFill>
@@ -609,7 +609,7 @@ const Lease: React.FC = () => {
 
 // ---------- CI / CD ----------
 
-const PIPE = ['git push main', 'pnpm install --frozen-lockfile', 'pnpm -r build', '104 API tests', 'Railway · Wait for CI', 'getguri.com'];
+const PIPE = ['git push main', 'pnpm install --frozen-lockfile', 'pnpm -r build', '104 API tests', 'Railway · Wait for CI', 'production'];
 
 const SUITES = [
   'security-pass', 'deals-verification', 'deals-closing', 'deals-rules', 'deals-agency', 'listings-rules',
@@ -690,7 +690,7 @@ const Outro: React.FC = () => (
     </div>
     <Rise delay={50}>
       <div style={{ fontFamily: mono, fontSize: 34, marginTop: 60, color: MIST }}>
-        <span style={{ color: LIME }}>getguri.com</span> · github.com/bashiir-code/guri
+        <span style={{ color: LIME }}>github.com/bashiir-code/guri</span>
       </div>
     </Rise>
   </AbsoluteFill>

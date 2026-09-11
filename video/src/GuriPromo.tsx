@@ -533,7 +533,7 @@ const Outro: React.FC = () => {
         </Pill>
       </div>
       <Rise delay={40}>
-        <div style={{ fontSize: 40, color: LIME, marginTop: 50, fontWeight: 700, letterSpacing: 1 }}>getguri.com</div>
+        <div style={{ fontSize: 40, color: LIME, marginTop: 50, fontWeight: 700, letterSpacing: 1 }}>github.com/bashiir-code/guri</div>
       </Rise>
     </AbsoluteFill>
   );
