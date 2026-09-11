@@ -1,0 +1,24 @@
+{
+  "name": "video",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts GuriPromo out/guri-promo.mp4 --concurrency=2",
+    "render:tech": "remotion render src/index.ts GuriTechReel out/guri-tech-reel.mp4 --concurrency=2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@remotion/cli": "^4.0.523",
+    "@remotion/google-fonts": "^4.0.523",
+    "@types/react": "^18.3.31",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.523",
+    "typescript": "^7.0.2"
+  }
+}
