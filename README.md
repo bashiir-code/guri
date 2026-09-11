@@ -4,7 +4,7 @@
 
 # Guri
 
-**A rental marketplace for Mogadishu, where every home is represented by a verified agency.<br />Designed, built and run in production end to end.**
+**A rental marketplace for Mogadishu, where every home is represented by a verified agency.<br />Designed and built end to end, and ran in production as a pilot.**
 
 [![CI](https://github.com/bashiir-code/guri/actions/workflows/ci.yml/badge.svg)](https://github.com/bashiir-code/guri/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
