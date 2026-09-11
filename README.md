@@ -4,7 +4,7 @@
 
 # Guri
 
-**A production rental marketplace for Mogadishu, where every home is represented by a verified agency.**
+**A rental marketplace for Mogadishu, where every home is represented by a verified agency.<br />Designed, built and run in production end to end.**
 
 [![CI](https://github.com/bashiir-code/guri/actions/workflows/ci.yml/badge.svg)](https://github.com/bashiir-code/guri/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
@@ -12,9 +12,9 @@
 ![NestJS](https://img.shields.io/badge/NestJS-API-E0234E?logo=nestjs&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-PostgreSQL-2D3748?logo=prisma&logoColor=white)
 ![Tests](https://img.shields.io/badge/API_tests-104_passing-B7F35D?labelColor=173A31)
-![Deploy](https://img.shields.io/badge/deployed_on-Railway-0B0D0E?logo=railway&logoColor=white)
+![Status](https://img.shields.io/badge/status-portfolio_project-B7F35D?labelColor=173A31)
 
-[**Live site → getguri.com**](https://getguri.com) · [Technical reel](#-video-walkthrough) · [Architecture](#-architecture) · [Engineering highlights](#-engineering-highlights)
+[Technical reel](#-video-walkthrough) · [Architecture](#-architecture) · [Engineering highlights](#-engineering-highlights)
 
 </div>
 
@@ -140,7 +140,7 @@ A pg-boss runner executes the timer table every 15 minutes: 14-day request expir
 
 ### CI-gated continuous deployment
 
-`git push main` → GitHub Actions (`pnpm install --frozen-lockfile` → build all packages → 104 API tests) → Railway auto-deploys web + API with **Wait for CI**. No green CI, no deploy. Migrations run as a pre-deploy step, and backup-and-restore is covered by its own test suite.
+`git push main` → GitHub Actions (`pnpm install --frozen-lockfile` → build all packages → 104 API tests) → Railway auto-deployed web + API with **Wait for CI**. No green CI, no deploy. Migrations ran as a pre-deploy step, and backup-and-restore is covered by its own test suite.
 
 <p align="center">
   <img src="docs/media/architecture.png" width="49%" alt="Architecture scene" />
@@ -157,7 +157,7 @@ A pg-boss runner executes the timer table every 15 minutes: 14-day request expir
 | Backend | NestJS, Prisma, PostgreSQL, pg-boss, @nestjs/schedule, zod |
 | Auth | Clerk (Google + email/password), JWKS verification with `jose`, Svix webhooks |
 | Files | Cloudflare R2 (S3 API, MinIO locally), sharp, @react-pdf/renderer |
-| Infra | Railway (web + API + Postgres), Cloudflare, GitHub Actions |
+| Infra | GitHub Actions CI; ran in production on Railway (web + API + Postgres) behind Cloudflare |
 | Testing | Vitest API suites: state machine, guards, security pass, timers, rate limits, backups |
 
 ## 📚 Documentation
@@ -199,14 +199,14 @@ pnpm --filter @guri/api db:seed-test    # grants the test account all roles + de
 | `pnpm --filter @guri/api test` | API test suite (state machine, guards, security pass) |
 | `pnpm --filter @guri/api db:deploy` | apply migrations in prod (Railway pre-deploy) |
 
-### How changes ship
+### CI and deployment
 
-Push to `main` → GitHub Actions builds all packages and runs the API suite → Railway (with **Wait for CI**) auto-deploys web + api. No green CI, no deploy. Details and rollback procedure are in [OPERATIONS.md](OPERATIONS.md).
+Every push to `main` and every pull request runs GitHub Actions: it builds all packages and runs the API suite. While Guri was live, Railway (with **Wait for CI**) auto-deployed web + api from green builds. The production hosting has since been retired, and the repo is now kept as a portfolio project. [LAUNCH.md](LAUNCH.md) and [OPERATIONS.md](OPERATIONS.md) document how production was set up and run.
 
 ---
 
 <div align="center">
 
-Built by [**@bashiir-code**](https://github.com/bashiir-code) · [getguri.com](https://getguri.com)
+Built by [**@bashiir-code**](https://github.com/bashiir-code)
 
 </div>
